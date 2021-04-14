@@ -51,6 +51,7 @@ router.get('/', function (req, res, next) {
     put    /cities/risk<br>
     delete /cities/risk<br>
     get    /log<br>
+    post   /database/dot<br>
     
   `);
 });
@@ -153,6 +154,19 @@ router.get('/vehicles/timetable', function (req, res, next) {
   })
   //!
 });
+
+router.post('/database/dot',function (req,res,next) {
+  const name = req.query.name || ''
+  const type = req.query.type || 0
+  const x = queryToNum(req.query.locx)
+  const y = queryToNum(req.query.locy)
+  const result = addDot(name,type,x,y)
+  return result.then(result=>{
+    res.json(
+      new SuccessModel(result)
+    )
+  })
+})
 
 router.post('/vehicles/timetable', function (req, res, next) {
   const number = queryToNum(req.query.number)

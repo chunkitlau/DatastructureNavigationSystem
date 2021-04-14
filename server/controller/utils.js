@@ -45,6 +45,11 @@ const getTravelersPlans = () => {
   return exec(sql)
 }
 
+const addDot = (name, type, x, y)=>{
+  const sql = `insert into dottable (type,name, location) values (${type},'${name}',ST_pointfromtext('POINT(${x} ${y})'));`
+  return exec(sql)
+}
+
 const addTravelersPlans = (id, requestTime, departure, arrival) => {
   const sql = `
     insert into travelersplans(id, requesttime, departure, arrival, plan)

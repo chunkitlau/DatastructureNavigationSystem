@@ -8,11 +8,9 @@
         </div>
         <div id="geo-marker"></div>
         <div style="display: none;">
-          <!-- Clickable label for Vienna -->
-          <a class="overlay" id="vienna" target="_blank" href="http://en.wikipedia.org/wiki/Vienna">Vienna</a>
-          <div id="marker" title="Marker"></div>
           <!-- Popup -->
-          <div id="popup" title="Title"></div>
+          <div id="popup" title="">
+          </div>
         </div>
         <!--
           <canvas ref="canvas" width="930" height="660">
@@ -31,16 +29,32 @@
             <span>title</span>
           </el-header>
           <el-main height="80%">
-            <span>Current time: {{ currentTime.day }} day {{ currentTime.hour }} hour</span>
+            <span>Current time: {{ currentTime.day }} day {{ currentTime.hour }} hour</span><br>
+            <span>Current position: {{  }} {{  }} </span>
             <el-button-group>
               <el-button @click="handlePlay" type="success" icon="el-icon-video-play">play</el-button>
               <el-button @click="handlePause" type="warning" icon="el-icon-video-pause">pause</el-button>
               <el-button @click="handleRestart" type="danger" icon="el-icon-refresh-left">reset</el-button>
-              <el-button @click="addDialogFormVisible = true" type="primary" icon="el-icon-circle-plus-outline">add entry</el-button>
-              <el-button @click="startAnimation()" type="primary" icon="el-icon-circle-plus-outline">start</el-button>
-              <el-button @click="pauseAnimation()" type="primary" icon="el-icon-circle-plus-outline">pause</el-button>
-              <el-button @click="resumeAnimation()" type="primary" icon="el-icon-circle-plus-outline">resume</el-button>
-              <el-button @click="stopAnimation()" type="primary" icon="el-icon-circle-plus-outline">stop</el-button>
+              <el-button @click="setNavigateFormVisible = true" type="primary" icon="el-icon-s-promotion">navigate</el-button>
+              <el-button @click="addFacilityFormVisible = true" type="primary" icon="el-icon-circle-plus-outline">add facility</el-button>
+              <el-button @click="addPathFormVisible = true" type="primary" icon="el-icon-circle-plus-outline">add path</el-button>
+              <el-dialog title="navigate" :visible.sync="setNavigateFormVisible">
+                <el-form :model="form">
+                  <el-form-item label="departure" :label-width="formLabelWidth">
+                    <el-input v-model="navigateForm.departure" autocomplete="off"></el-input>
+                  </el-form-item>
+                  <el-form-item label="arrival" :label-width="formLabelWidth">
+                    <el-input v-model="navigateForm.arrival" autocomplete="off"></el-input>
+                  </el-form-item>
+                  <el-form-item label="strategy" :label-width="formLabelWidth">
+                    <el-input v-model="navigateForm.strategy" autocomplete="off"></el-input>
+                  </el-form-item>
+                </el-form>
+                <div slot="footer" class="dialog-footer">
+                  <el-button @click="setNavigateFormVisible = false">cancel</el-button>
+                  <el-button type="primary" @click="setNavigateFormVisible = false, setNavigate()">confirm</el-button>
+                </div>
+              </el-dialog>
               <el-dialog title="adding" :visible.sync="addDialogFormVisible">
                 <el-form :model="form">
                   <el-row>
@@ -112,105 +126,160 @@
                   <el-button type="primary" @click="addVehiclesTimetableVisible = false, addVehiclesTimetable()">confirm</el-button>
                 </div>
               </el-dialog>
-              <el-dialog title="adding vehicles risk" :visible.sync="addVehiclesRiskVisible">
+              <el-dialog title="adding facility" :visible.sync="addFacilityFormVisible">
+                <span>using the position last click to add facility</span>
                 <el-form :model="form">
-                  <el-form-item label="vehicle" :label-width="formLabelWidth">
-                    <el-input v-model="vehiclesRiskForm.vehicle" autocomplete="off"></el-input>
+                  <el-form-item label="name" :label-width="formLabelWidth">
+                    <el-input v-model="facilityForm.name" autocomplete="off"></el-input>
                   </el-form-item>
-                  <el-form-item label="risk" :label-width="formLabelWidth">
-                    <el-input v-model="vehiclesRiskForm.risk" autocomplete="off"></el-input>
+                  <el-form-item label="type" :label-width="formLabelWidth">
+                    <el-input v-model="facilityForm.type" autocomplete="off"></el-input>
+                  </el-form-item>
+                  <el-form-item label="description" :label-width="formLabelWidth">
+                    <el-input v-model="facilityForm.description" autocomplete="off"></el-input>
                   </el-form-item>
                 </el-form>
                 <div slot="footer" class="dialog-footer">
-                  <el-button @click="addVehiclesRiskVisible = false, addDialogFormVisible = true">back</el-button>
-                  <el-button @click="addVehiclesRiskVisible = false">cancel</el-button>
-                  <el-button type="primary" @click="addVehiclesRiskVisible = false, addVehiclesRisk()">confirm</el-button>
+                  <el-button @click="addFacilityFormVisible = false">cancel</el-button>
+                  <el-button type="primary" @click="addFacilityFormVisible = false, facilityForm.position = lastclick[lastclickp] ,addFacility()">confirm</el-button>
                 </div>
               </el-dialog>
-              <el-dialog title="adding cities risk" :visible.sync="addCitiesRiskVisible">
+              <!--
+              <el-dialog title="adding path" :visible.sync="addPathFormVisible">
+                <span>using the position last click to add facility</span>
                 <el-form :model="form">
-                  <el-form-item label="city" :label-width="formLabelWidth">
-                    <el-input v-model="citiesRiskForm.city" autocomplete="off"></el-input>
+                  <el-form-item label="name" :label-width="formLabelWidth">
+                    <el-input v-model="facilityForm.name" autocomplete="off"></el-input>
                   </el-form-item>
-                  <el-form-item label="risk" :label-width="formLabelWidth">
-                    <el-input v-model="citiesRiskForm.risk" autocomplete="off"></el-input>
+                  <el-form-item label="type" :label-width="formLabelWidth">
+                    <el-input v-model="facilityForm.type" autocomplete="off"></el-input>
+                  </el-form-item>
+                  <el-form-item label="departure" :label-width="formLabelWidth">
+                    <el-input v-model="facilityForm.departure" autocomplete="off"></el-input>
+                  </el-form-item>
+                  <el-form-item label="arrival" :label-width="formLabelWidth">
+                    <el-input v-model="facilityForm.arrival" autocomplete="off"></el-input>
+                  </el-form-item>
+                  <el-form-item label="length" :label-width="formLabelWidth">
+                    <el-input v-model="facilityForm.description" autocomplete="off"></el-input>
+                  </el-form-item>
+                  <el-form-item label="length" :label-width="formLabelWidth">
+                    <el-input v-model="facilityForm.description" autocomplete="off"></el-input>
                   </el-form-item>
                 </el-form>
                 <div slot="footer" class="dialog-footer">
-                  <el-button @click="addCitiesRiskVisible = false, addDialogFormVisible = true">back</el-button>
-                  <el-button @click="addCitiesRiskVisible = false">cancel</el-button>
-                  <el-button type="primary" @click="addCitiesRiskVisible = false, addCitiesRisk()">confirm</el-button>
+                  <el-button @click="addPathFormVisible = false">cancel</el-button>
+                  <el-button type="primary" @click="addPathFormVisible = false,addPath()">confirm</el-button>
                 </div>
               </el-dialog>
+              -->
             </el-button-group>
-            <div id="mouse-position"></div>
-            <form>
-              <label for="projection">Projection </label>
-              <select id="projection">
-                <option value="EPSG:4326">EPSG:4326</option>
-                <option value="EPSG:3857">EPSG:3857</option>
-              </select>
-              <label for="precision">Precision</label>
-              <input id="precision" type="number" min="0" max="12" value="4" />
-            </form>
-            
             <el-tabs type="border-card">
-              <el-tab-pane label="travelers status">
-                <el-table :data="travelersStatus"
+              <el-tab-pane label="travel plan">
+                <el-table :data="citiesRisk"
                           height="500"
                           stripe
                           style="width: 100%">
-                  <el-table-column prop="ID"
-                                   label="ID"
+                  <el-table-column prop="city"
+                                   label="time"
                                    width="60">
                   </el-table-column>
-                  <el-table-column prop="vehicle"
-                                   label="vehicle"
-                                   width="90">
-                  </el-table-column>
-                  <el-table-column prop="status"
-                                   label="status"
-                                   width="90">
-                  </el-table-column>
-                </el-table>
-              </el-tab-pane>
-              <el-tab-pane label="travelers plans">
-                <el-table :data="travelersPlans"
-                          height="500"
-                          stripe
-                          style="width: 100%">
-                  <el-table-column prop="ID"
-                                   label="ID"
+                  <el-table-column prop="city"
+                                   label="name"
                                    width="60">
                   </el-table-column>
-                  <el-table-column prop="requestTime"
-                                   label="request time"
+                  <el-table-column prop="city"
+                                   label="position"
                                    width="120">
-                  </el-table-column>
-                  <el-table-column prop="departure"
-                                   label="departure"
-                                   width="120">
-                  </el-table-column>
-                  <el-table-column prop="arrival"
-                                   label="arrival"
-                                   width="120">
-                  </el-table-column>
-                  <el-table-column prop="plan"
-                                   label="plan"
-                                   width="180">
                   </el-table-column>
                   <el-table-column label="operation" width="180">
                     <template slot-scope="scope">
                       <el-button size="mini"
-                                 @click="editTravelersPlans(scope.$index, scope.row)">edit</el-button>
+                                 @click="editCitiesRisk(scope.$index, scope.row)">edit</el-button>
                       <el-button size="mini"
                                  type="danger"
-                                 @click="deleteTravelersPlans(scope.$index, scope.row)">delete</el-button>
+                                 @click="deleteCitiesRisk(scope.$index, scope.row)">delete</el-button>
                     </template>
                   </el-table-column>
                 </el-table>
               </el-tab-pane>
-              <el-tab-pane label="vehicles timetable">
+              <el-tab-pane label="facility(nearby)">
+                <el-table :data="citiesRisk"
+                          height="500"
+                          stripe
+                          style="width: 100%">
+                  <el-table-column prop="city"
+                                   label="name"
+                                   width="60">
+                  </el-table-column>
+                  <el-table-column prop="city"
+                                   label="type"
+                                   width="60">
+                  </el-table-column>
+                  <el-table-column prop="city"
+                                   label="position"
+                                   width="120">
+                  </el-table-column>
+                  <el-table-column prop="city"
+                                   label="description"
+                                   width="120">
+                  </el-table-column>
+                  <el-table-column label="operation" width="180">
+                    <template slot-scope="scope">
+                      <el-button size="mini"
+                                 @click="editCitiesRisk(scope.$index, scope.row)">edit</el-button>
+                      <el-button size="mini"
+                                 type="danger"
+                                 @click="deleteCitiesRisk(scope.$index, scope.row)">delete</el-button>
+                    </template>
+                  </el-table-column>
+                </el-table>
+              </el-tab-pane>
+              <el-tab-pane label="path">
+                <el-table :data="vehiclesTimetable"
+                          height="500"
+                          stripe
+                          style="width: 100%">
+                  <el-table-column prop="number"
+                                   label="name"
+                                   width="60">
+                  </el-table-column>
+                  <el-table-column prop="type"
+                                   label="type"
+                                   width="60">
+                  </el-table-column>
+                  <el-table-column prop="departure"
+                                   label="departure"
+                                   width="90">
+                  </el-table-column>
+                  <el-table-column prop="arrival"
+                                   label="arrival"
+                                   width="90">
+                  </el-table-column>
+                  <el-table-column prop="arrivalTime"
+                                   label="length"
+                                   width="90">
+                  </el-table-column>
+                  <el-table-column prop="arrivalTime"
+                                   label="transit time"
+                                   width="90">
+                  </el-table-column>
+                  <el-table-column prop="arrivalTime"
+                                   label="crowdedness"
+                                   width="90">
+                  </el-table-column>
+                  <el-table-column label="operation" width="180">
+                    <template slot-scope="scope">
+                      <el-button size="mini"
+                                 @click="editVehiclesTimetable(scope.$index, scope.row)">edit</el-button>
+                      <el-button size="mini"
+                                 type="danger"
+                                 @click="deleteVehiclesTimetable(scope.$index, scope.row)">delete</el-button>
+                    </template>
+                  </el-table-column>
+                </el-table>
+              </el-tab-pane>
+              <el-tab-pane label="timetable">
                 <el-table :data="vehiclesTimetable"
                           height="500"
                           stripe
@@ -239,10 +308,6 @@
                                    label="arrival time"
                                    width="120">
                   </el-table-column>
-                  <el-table-column prop="risk"
-                                   label="risk"
-                                   width="60">
-                  </el-table-column>
                   <el-table-column label="operation" width="180">
                     <template slot-scope="scope">
                       <el-button size="mini"
@@ -250,54 +315,6 @@
                       <el-button size="mini"
                                  type="danger"
                                  @click="deleteVehiclesTimetable(scope.$index, scope.row)">delete</el-button>
-                    </template>
-                  </el-table-column>
-                </el-table>
-              </el-tab-pane>
-              <el-tab-pane label="vehicles risk">
-                <el-table :data="vehiclesRisk"
-                          height="500"
-                          stripe
-                          style="width: 100%">
-                  <el-table-column prop="vehicle"
-                                   label="vehicle"
-                                   width="90">
-                  </el-table-column>
-                  <el-table-column prop="risk"
-                                   label="risk"
-                                   width="60">
-                  </el-table-column>
-                  <el-table-column label="operation" width="180">
-                    <template slot-scope="scope">
-                      <el-button size="mini"
-                                 @click="editVehiclesRisk(scope.$index, scope.row)">edit</el-button>
-                      <el-button size="mini"
-                                 type="danger"
-                                 @click="deleteVehiclesRisk(scope.$index, scope.row)">delete</el-button>
-                    </template>
-                  </el-table-column>
-                </el-table>
-              </el-tab-pane>
-              <el-tab-pane label="cities risk">
-                <el-table :data="citiesRisk"
-                          height="500"
-                          stripe
-                          style="width: 100%">
-                  <el-table-column prop="city"
-                                   label="city"
-                                   width="120">
-                  </el-table-column>
-                  <el-table-column prop="risk"
-                                   label="risk"
-                                   width="60">
-                  </el-table-column>
-                  <el-table-column label="operation" width="180">
-                    <template slot-scope="scope">
-                      <el-button size="mini"
-                                 @click="editCitiesRisk(scope.$index, scope.row)">edit</el-button>
-                      <el-button size="mini"
-                                 type="danger"
-                                 @click="deleteCitiesRisk(scope.$index, scope.row)">delete</el-button>
                     </template>
                   </el-table-column>
                 </el-table>
@@ -330,12 +347,26 @@ export default {
       map: null,
       timer: 0,
       currentTime: 0,
+      lastclick: [[0,0],[0,0]],
+      lastclickp: 1,
+      setNavigateFormVisible: false,
       addDialogFormVisible: false,
       addTravelersPlansVisible: false,
       addVehiclesTimetableVisible: false,
       addVehiclesRiskVisible: false,
-      addCitiesRiskVisible: false,
+      addFacilityFormVisible: false,
       formLabelWidth: '120px',
+      navigateForm: {
+        departure: '',
+        arrival: '',
+        strategy: ''
+      },
+      facilityForm: {
+        name: '',
+        type: '',
+        description: '',
+        position: ''
+      },
       travelersPlansForm: {
         id: '',
         requestTime: '',
@@ -389,6 +420,15 @@ export default {
             day: parseInt(res.data.data.currentTime / 24),
             hour: res.data.data.currentTime % 24
           }
+        })
+        .catch(err => {
+          console.log('error', err)
+        })
+    },
+    addFacility() {
+      this.$axios.post(`/api/facility?name=${this.facilityForm.name}&type=${this.facilityForm.type}&position=${this.facilityForm.position}&description=${this.facilityForm.description}`)// !
+        .then(res => {
+          this.citiesRiskForm = {}
         })
         .catch(err => {
           console.log('error', err)
@@ -733,17 +773,6 @@ export default {
       updateWhileAnimating: true
     });
 
-
-    var mousePositionControl = new ol.control.MousePosition({
-      coordinateFormat: createStringXY(4),
-      projection: 'EPSG:3857',
-      // comment the following two lines to have the mouse position
-      // be placed within the map.
-      className: 'custom-mouse-position',
-      target: document.getElementById('mouse-position'),
-      undefinedHTML: '&nbsp;',
-    });
-
     var map = new ol.Map({
       target: 'map',
       view: viewNow,
@@ -754,22 +783,9 @@ export default {
           opacity: 0.6
         }),
         layerRoute, layerFeatures
-      ],
-      controls: ol.control.defaults().extend([mousePositionControl])
+      ]
     });
 
-    
-    var projectionSelect = document.getElementById('projection');
-    projectionSelect.addEventListener('change', function (event) {
-      mousePositionControl.setProjection(event.target.value);
-    });
-
-    var precisionInput = document.getElementById('precision');
-    precisionInput.addEventListener('change', function (event) {
-      var format = createStringXY(event.target.valueAsNumber);
-      mousePositionControl.setCoordinateFormat(format);
-    });
-    
     var pos = fromLonLat([16.3725, 48.208889]);
     
     // Popup showing the position the user clicked
@@ -777,28 +793,17 @@ export default {
       element: document.getElementById('popup'),
     });
     map.addOverlay(popup);
+
+    var lastclick = [[0,0],[0,0]], lastclickp = 1;
     
-    // Vienna marker
-    var marker = new ol.Overlay({
-      position: pos,
-      positioning: 'center-center',
-      element: document.getElementById('marker'),
-      stopEvent: false,
-    });
-    map.addOverlay(marker);
-    
-    // Vienna label
-    var vienna = new ol.Overlay({
-      position: pos,
-      element: document.getElementById('vienna'),
-    });
-    map.addOverlay(vienna);
-    
-    map.on('click', function (evt) {
+    map.on('singleclick', function (evt) {
+      //this.visible = ture;
       var element = popup.getElement();
       var coordinate = evt.coordinate;
+      lastclickp = 1 - lastclickp;
+      lastclick[lastclickp] = coordinate;
+      console.log('click: ' + lastclick[lastclickp] + ' and ' + lastclick[1 - lastclickp]);
       var hdms = toStringHDMS(toLonLat(coordinate));
-
       $(element).popover('dispose');
       popup.setPosition(coordinate);
       $(element).popover({
@@ -806,7 +811,7 @@ export default {
         placement: 'top',
         animation: false,
         html: true,
-        content: '<p>The location you clicked was:</p><code>' + hdms + '</code>',
+        content: `<p>The location you clicked was:</p><code>` + hdms + `</code>`,
       });
       $(element).popover('show');
     });

@@ -30,6 +30,7 @@ const { SuccessModel, ErrorModel } = require('../model/resModel')
 router.get('/', function (req, res, next) {
   res.send(`
     api list:<br>
+    post   ip:port/api/facility?name=&type=&position=&description=<br>
     get    /current/time<br>
     get    /current/status<br>
     put    /current/status<br>

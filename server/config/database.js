@@ -5,7 +5,7 @@ let MYSQL_CONF = {
   user: 'root',
   password: 'root',
   port: '3306',
-  database: 'mytravelsystem'
+  database: 'navigationsystem'
 }
 
 if (env === 'dev') {
@@ -14,7 +14,7 @@ if (env === 'dev') {
     user: 'root',
     password: 'root',
     port: '3306',
-    database: 'mytravelsystem'
+    database: 'navigationsystem'
   }
 }
 if (env === 'production') {
@@ -23,7 +23,7 @@ if (env === 'production') {
     user: 'root',
     password: 'root',
     port: '3306',
-    database: 'mytravelsystem'
+    database: 'navigationsystem'
   }
 }
 

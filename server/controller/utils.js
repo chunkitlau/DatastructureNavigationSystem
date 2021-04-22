@@ -40,13 +40,21 @@ const getTravelersStatus = () => {
   return exec(sql)
 }
 
-const getTravelersPlans = () => {
-  const sql = `select * from travelersplans;`
+const getFacility = (id) => {
+  const sql = `select * from dottable where id=${id};`
   return exec(sql)
 }
 
-const addDot = (name, type, x, y)=>{
-  const sql = `insert into dottable (type,name, location) values (${type},'${name}',ST_pointfromtext('POINT(${x} ${y})'));`
+const getFacilitys = () => {
+  const sql = `select * from dottable;`
+  return exec(sql)
+}
+
+const createFacility = (name, type, x, y, description) => {
+  console.log(`(${type},'${name}',ST_pointfromtext('POINT(${x} ${y})'),'${description})'`)
+  const sql = `
+    insert into dottable (type,name, location,description) values (${type},'${name}',ST_pointfromtext('POINT(${x} ${y})'),'${description}');
+    `
   return exec(sql)
 }
 
@@ -164,12 +172,15 @@ const getLog = () => {
 //
 
 module.exports = {
+  createFacility,
+  getFacility,
+  getFacilitys,
+  
   queryToNum,
   getCurrentTime,
   getCurrentStatus,
   updateCurrentStatus,
   getTravelersStatus,
-  getTravelersPlans,
   addTravelersPlans,
   updateTravelersPlans,
   deleteTravelersPlans,

@@ -16,30 +16,31 @@
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 --
--- Table structure for table `dottable`
+-- Table structure for table `edgetable`
 --
 
-DROP TABLE IF EXISTS `dottable`;
+DROP TABLE IF EXISTS `edgetable`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `dottable` (
+CREATE TABLE `edgetable` (
   `id` int NOT NULL AUTO_INCREMENT,
   `type` int NOT NULL,
-  `name` varchar(45) DEFAULT NULL,
-  `location` point NOT NULL,
+  `fromid` int NOT NULL,
+  `toid` int NOT NULL,
+  `efficiency` float NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `id_UNIQUE` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Dumping data for table `dottable`
+-- Dumping data for table `edgetable`
 --
 
-LOCK TABLES `dottable` WRITE;
-/*!40000 ALTER TABLE `dottable` DISABLE KEYS */;
-INSERT INTO `dottable` VALUES (0,1,'操场',_binary '\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0'),(1,2,'教室食堂',_binary '\0\0\0\0\0\0\0\0\0\0\0\0\0\0@\0\0\0\0\0\0�?'),(2,0,NULL,_binary '\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0@'),(3,2,'学生食堂',_binary '\0\0\0\0\0\0\0\0\0\0\0\0\0\0@\0\0\0\0\0\0@'),(4,0,NULL,_binary '\0\0\0\0\0\0\0\0\0\0\0\0\0@\0\0\0\0\0\0\0@'),(5,1,'图书馆',_binary '\0\0\0\0\0\0\0\0\0\0\0\0\0@\0\0\0\0\0\0�?'),(6,1,'教学实验综合楼',_binary '\0\0\0\0\0\0\0\0\0\0\0\0\0 @\0\0\0\0\0\0@'),(7,0,NULL,_binary '\0\0\0\0\0\0\0\0\0\0\0\0\0\0@\0\0\0\0\0\0\0\0');
-/*!40000 ALTER TABLE `dottable` ENABLE KEYS */;
+LOCK TABLES `edgetable` WRITE;
+/*!40000 ALTER TABLE `edgetable` DISABLE KEYS */;
+INSERT INTO `edgetable` VALUES (0,0,0,2,1),(1,0,0,7,1),(2,0,7,1,1),(3,0,1,4,1),(4,0,2,4,1),(5,0,1,3,1),(6,0,1,5,1),(7,0,5,6,1),(8,0,4,6,1),(9,0,3,6,1),(11,0,8,9,1),(12,0,3,8,1);
+/*!40000 ALTER TABLE `edgetable` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
@@ -51,4 +52,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2021-04-14  1:16:55
+-- Dump completed on 2021-04-23 15:38:27

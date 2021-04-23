@@ -50,11 +50,12 @@ const getFacilitys = () => {
   return exec(sql)
 }
 
-const createFacility = (name, type, x, y, description) => {
-  console.log(`(${type},'${name}',ST_pointfromtext('POINT(${x} ${y})'),'${description})'`)
-  const sql = `
-    insert into dottable (type,name, location,description) values (${type},'${name}',ST_pointfromtext('POINT(${x} ${y})'),'${description}');
-    `
+const createFacility = (name, type, position, description) => {
+  position = position.replace(',',' ')
+  const sql =  `
+    insert into dottable (type, name, location, description) values (${type},'${name}',ST_pointfromtext('POINT(${position})'),'${description}');
+  `
+  console.log(`(${type},'${name}',ST_pointfromtext('POINT(${position})'),'${description}')`)
   return exec(sql)
 }
 
@@ -175,7 +176,7 @@ module.exports = {
   createFacility,
   getFacility,
   getFacilitys,
-  
+
   queryToNum,
   getCurrentTime,
   getCurrentStatus,

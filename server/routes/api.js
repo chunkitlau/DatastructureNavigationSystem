@@ -85,12 +85,12 @@ router.get('/facilitys', function (req, res, next) {
 });
 
 router.post('/facility', function (req, res, next) {
+  const position = req.query.position
   const name = req.query.name || ''
   const type = req.query.type || 0
-  const x = queryToNum(req.query.locx)
-  const y = queryToNum(req.query.locy)
   const dscpn = req.query.description || ''
-  const result = createFacility(name,type,x,y,dscpn)
+  console.log(position)
+  const result = createFacility(name,type,position,dscpn)
   return result.then(result=>{
     res.json(
       new SuccessModel(result)

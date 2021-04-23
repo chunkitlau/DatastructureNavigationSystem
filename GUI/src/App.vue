@@ -336,7 +336,7 @@
 <script>
 import Map from 'ol/Map';
 import {createStringXY} from 'ol/coordinate';
-import { fromLonLat, toLonLat } from 'ol/proj';
+import { fromLonLat, toLonLat, transform } from 'ol/proj';
 import { toStringHDMS } from 'ol/coordinate';
 
 var lastclick = [[0,0],[0,0]], lastclickp = 1;
@@ -800,7 +800,8 @@ export default {
       var element = popup.getElement();
       var coordinate = evt.coordinate;
       lastclickp = 1 - lastclickp;
-      lastclick[lastclickp] = coordinate;
+      var EPSG4326coordinate = transform(coordinate, 'EPSG:3857' ,'EPSG:4326');
+      lastclick[lastclickp] = EPSG4326coordinate;
       console.log('click: ' + lastclick[lastclickp] + ' and ' + lastclick[1 - lastclickp]);
       var hdms = toStringHDMS(toLonLat(coordinate));
       $(element).popover('dispose');

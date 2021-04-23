@@ -141,7 +141,7 @@
                 </el-form>
                 <div slot="footer" class="dialog-footer">
                   <el-button @click="addFacilityFormVisible = false">cancel</el-button>
-                  <el-button type="primary" @click="addFacilityFormVisible = false, facilityForm.position = lastclick[lastclickp] ,addFacility()">confirm</el-button>
+                  <el-button type="primary" @click="addFacilityFormVisible = false, addFacility()">confirm</el-button>
                 </div>
               </el-dialog>
               <!--
@@ -339,6 +339,7 @@ import {createStringXY} from 'ol/coordinate';
 import { fromLonLat, toLonLat } from 'ol/proj';
 import { toStringHDMS } from 'ol/coordinate';
 
+var lastclick = [[0,0],[0,0]], lastclickp = 1;
 export default {
   name: 'App',
   data() {
@@ -347,8 +348,6 @@ export default {
       map: null,
       timer: 0,
       currentTime: 0,
-      lastclick: [[0,0],[0,0]],
-      lastclickp: 1,
       setNavigateFormVisible: false,
       addDialogFormVisible: false,
       addTravelersPlansVisible: false,
@@ -426,6 +425,9 @@ export default {
         })
     },
     addFacility() {
+      console.log(lastclick[lastclickp]);
+      this.facilityForm.position = lastclick[lastclickp]
+      console.log(this.facilityForm)
       this.$axios.post(`/api/facility?name=${this.facilityForm.name}&type=${this.facilityForm.type}&position=${this.facilityForm.position}&description=${this.facilityForm.description}`)// !
         .then(res => {
           this.citiesRiskForm = {}
@@ -794,7 +796,6 @@ export default {
     });
     map.addOverlay(popup);
 
-    var lastclick = [[0,0],[0,0]], lastclickp = 1;
     
     map.on('singleclick', function (evt) {
       //this.visible = ture;
@@ -895,6 +896,9 @@ if (this.timer) {
   }, 1000)
 }
 */
+  },
+  updated() {
+
   },
   destroyed() {
     // clearInterval(this.timer)

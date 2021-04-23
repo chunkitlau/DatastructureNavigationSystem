@@ -1,12 +1,15 @@
 var express = require('express');
 var router = express.Router();
 const {
+  createFacility,
+  getFacility,
+  getFacilitys,
+
   queryToNum,
   getCurrentTime,
   getCurrentStatus,
   updateCurrentStatus,
   getTravelersStatus,
-  getTravelersPlans,
   addTravelersPlans,
   updateTravelersPlans,
   deleteTravelersPlans,
@@ -29,8 +32,12 @@ const { SuccessModel, ErrorModel } = require('../model/resModel')
 /* GET api listing. */
 router.get('/', function (req, res, next) {
   res.send(`
-    api list:<br>
-    post   ip:port/api/facility?name=&type=&position=&description=<br>
+    api list:<br> (following 'ip:port/api')
+    
+    post   /facility?name=&type=&position=&description=<br>
+    get    /facilitys<br>
+    get    /facility<br>
+
     get    /current/time<br>
     get    /current/status<br>
     put    /current/status<br>
@@ -54,6 +61,41 @@ router.get('/', function (req, res, next) {
     get    /log<br>
     
   `);
+});
+
+router.get('/facility', function (req, res, next) {
+  const id = req.query.id
+  const result = getFacility(id)
+  return result.then(result => {
+    res.json(
+      new SuccessModel(result)
+    )
+  })
+  //!
+});
+
+router.get('/facilitys', function (req, res, next) {
+  const result = getFacilitys()
+  return result.then(result => {
+    res.json(
+      new SuccessModel(result)
+    )
+  })
+  //!
+});
+
+router.post('/facility', function (req, res, next) {
+  const name = req.query.name || ''
+  const type = req.query.type || 0
+  const x = queryToNum(req.query.locx)
+  const y = queryToNum(req.query.locy)
+  const dscpn = req.query.description || ''
+  const result = createFacility(name,type,x,y,dscpn)
+  return result.then(result=>{
+    res.json(
+      new SuccessModel(result)
+    )
+  })
 });
 
 router.get('/current/time', function (req, res, next) {
@@ -88,16 +130,6 @@ router.put('/current/status', function (req, res, next) {
 
 router.get('/travelers/status', function (req, res, next) {
   const result = getTravelersStatus()
-  return result.then(result => {
-    res.json(
-      new SuccessModel(result)
-    )
-  })
-  //!
-});
-
-router.get('/travelers/plans', function (req, res, next) {
-  const result = getTravelersPlans()
   return result.then(result => {
     res.json(
       new SuccessModel(result)

@@ -46,7 +46,8 @@ class PriorityQueue {
     let index = 0
     let tmp
     while (this.left(index) <= this.length) {
-      if (this.right(index) <= this.length && this._compare(this.left(index), this.right(index))) tmp = this.right(index)
+      if (this.right(index) <= this.length && this._compare(this.left(index), this.right(index)))
+        tmp = this.right(index)
       else this.left(index)
       if (this._compare(tmp, index)) {
         _swap(index, tmp)
@@ -69,9 +70,9 @@ class PriorityQueue {
 }
 
 const calcCost = (dotA, dotB, edge) => {
-  // console.log(`${dotA.id}<->${dotB.id}`);
   // calc the cost to go through edge with method
-  const Dist = (dotA, dotB) => Math.sqrt(Math.pow(dotA.location.x - dotB.location.x, 2) + Math.pow(dotA.location.y - dotB.location.y, 2))
+  const Dist = (dotA, dotB) =>
+    Math.sqrt(Math.pow(dotA.location.x - dotB.location.x, 2) + Math.pow(dotA.location.y - dotB.location.y, 2))
   return Dist(dotA, dotB) * edge.efficiency
 }
 
@@ -124,7 +125,9 @@ function runShortestPath(startDotID, endDotID, method) {
               console.log(`next dot ${edges[nowEdgeID].toid}: ${dots[edges[nowEdgeID].toid].name}`)
               nextState = {
                 id: edges[nowEdgeID].toid,
-                dist: nowState.dist + calcCost(dots[edges[nowEdgeID].fromid], dots[edges[nowEdgeID].toid], edges[nowEdgeID], method)
+                dist:
+                  nowState.dist +
+                  calcCost(dots[edges[nowEdgeID].fromid], dots[edges[nowEdgeID].toid], edges[nowEdgeID], method)
               }
               if (dist[nextState.id] == undefined || dist[nextState.id] > nextState.dist) {
                 console.log(`push ${nextState.id},${nextState.dist}`)

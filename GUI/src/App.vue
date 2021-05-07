@@ -335,6 +335,7 @@ import { toStringHDMS } from 'ol/coordinate';
 import Text from 'ol/style/Text';
 
 var lastclick = [[0,0],[0,0]], lastclickp = 1;
+var dotTable,edgeTable;
 export default {
   name: 'App',
   data() {
@@ -861,19 +862,28 @@ export default {
         })
       ]
 
-    // var feature1 = new ol.Feature({
-    //   geometry: new ol.geom.Point(path[0])
-    // }),
-    //   feature2 = new ol.Feature({
-    //     geometry: new ol.geom.Point(path[path.length - 1])
-    //   });
+/*
+    var path = [
+      [12952250, 4860150],
+      [12944600, 4888600],
+      [12949287.297571652,4885310.053422529]
+    ];
 
-    // feature1.setStyle(style1);
-    // feature2.setStyle(style1);
-    // sourceFeatures.addFeatures([feature1, feature2]);
+    console.log(path);
 
-    // lineString.setCoordinates(path);
-    /*
+    var feature1 = new ol.Feature({
+      geometry: new ol.geom.Point(path[0])
+    }),
+      feature2 = new ol.Feature({
+        geometry: new ol.geom.Point(path[path.length - 1])
+      });
+
+    feature1.setStyle(style1);
+    feature2.setStyle(style1);
+    sourceFeatures.addFeatures([feature1, feature2]);
+
+    lineString.setCoordinates(path);
+    
     for(let i=0;i<path.length;i++){
       var feature=new ol.Feature({
         geometry: new ol.geom.Point(path[i]),
@@ -892,25 +902,25 @@ export default {
       }));
       sourceFeatures.addFeatures([feature]);
     }
-    */
 
-    // var i = 0;
-    // //fire the animation
-    // map.once('postcompose', function (event) {
-    //   console.info('postcompose');
-    //   this.interval = setInterval(animation, 500);
-    // });
+    var i = 0;
+    //fire the animation
+    map.once('postcompose', function (event) {
+      console.info('postcompose');
+      this.interval = setInterval(animation, 500);
+    });
 
-    // var animation = function () {
+    var animation = function () {
 
-    //   if (i < path.length) {
-    //     lineString.setCoordinates(path.slice(0,i+1));
-    //     marker.setPosition(path[i]);
-    //     i++;
-    //   }
-    // };
-
-  /*
+      if (i < path.length) {
+        lineString.setCoordinates(path.slice(0,i+1));
+        console.log(lineString);
+        marker.setPosition(path[i]);
+        i++;
+      }
+    };
+*/
+/*
 if (this.timer) {
   clearInterval(this.timer)
 } else {
@@ -924,9 +934,9 @@ if (this.timer) {
 
     this.$axios.get('/api/facilitys')
       .then(res => {
-        const dotTable=res.data.data;
+        dotTable=res.data.data;
+        // console.log(dotTable);
         for(var i in dotTable){
-          console.log(transform(Object.values(dotTable[i].location),'EPSG:4326','EPSG:3857'));
           var feature=new ol.Feature({
             geometry: new ol.geom.Point(transform(Object.values(dotTable[i].location),'EPSG:4326','EPSG:3857')),
             name: dotTable[i].id
@@ -948,6 +958,49 @@ if (this.timer) {
       .catch(err => {
         console.log('err');
       });
+
+      // 将数据库中的所有边显示在地图上
+  
+      this.$axios.get('/api/roads')
+        .then(res => {
+          var edgeColor=['#333399','#ff9900','#009900','#cc0000'];
+          edgeTable=res.data.data;
+          for(var i in edgeTable){
+            var fromLoc=dotTable.find(o => o.id === edgeTable[i].fromid).location;
+            var toLoc=dotTable.find(o => o.id === edgeTable[i].toid).location;
+            var points=new Array(
+              transform(Object.values(fromLoc),'EPSG:4326','EPSG:3857'),
+              transform(Object.values(toLoc),'EPSG:4326','EPSG:3857')
+            );
+            var line=new ol.geom.LineString(points);
+            var layerEdge = new ol.layer.Vector({
+              source: new ol.source.Vector({
+                features: [
+                  new ol.Feature({ geometry: line })
+                ]
+              }),
+              style: [
+                new ol.style.Style({
+                  stroke: new ol.style.Stroke({
+                    width: 3,
+                    color: edgeColor[edgeTable[i].type],
+                    lineDash: [.1, 5]
+                  }),
+                  text: new ol.style.Text({
+                    font: '16px sans-serif',
+                    text: edgeTable[i].id,
+                    fill: new ol.style.Fill({color: '#000'})
+                  })
+                })
+              ]
+            });
+            map.addLayer(layerEdge);
+          }
+        })
+      .catch(err => {
+        console.log(err);
+      });
+      
   },
   updated() {
 

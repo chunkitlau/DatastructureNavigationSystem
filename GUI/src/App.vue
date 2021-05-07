@@ -746,7 +746,7 @@ export default {
       center: [12948425, 4875300],
       zoom: 11.7
     })
-    var viewNow = bputCampus;
+    var viewNow = bputShaheCampus;
 
     var sourceFeatures = new ol.source.Vector(),
       layerFeatures = new ol.layer.Vector({ source: sourceFeatures });
@@ -797,10 +797,12 @@ export default {
       //this.visible = ture;
       var element = popup.getElement();
       var coordinate = evt.coordinate;
+      // console.log(coordinate);
       lastclickp = 1 - lastclickp;
       var EPSG4326coordinate = transform(coordinate, 'EPSG:3857' ,'EPSG:4326');
+      // console.log(EPSG4326coordinate);
       lastclick[lastclickp] = EPSG4326coordinate;
-      console.log('click: ' + lastclick[lastclickp] + ' and ' + lastclick[1 - lastclickp]);
+      // console.log('click: ' + lastclick[lastclickp] + ' and ' + lastclick[1 - lastclickp]);
       var hdms = toStringHDMS(toLonLat(coordinate));
       $(element).popover('dispose');
       popup.setPosition(coordinate);
@@ -843,23 +845,7 @@ export default {
           }),
           zIndex: 4
         })
-      ],
-      style2 = [
-        new ol.style.Style({
-          image: new ol.style.Circle({
-            radius: 6, fill: fill, stroke: stroke
-          })
-        })
       ]
-
-
-    //a simulated path
-
-    var path = [
-      [12952250, 4860150],
-      [12944600, 4888600],
-      [12949287.297571652,4885310.053422529]
-    ];
 
     // var feature1 = new ol.Feature({
     //   geometry: new ol.geom.Point(path[0])
@@ -873,6 +859,7 @@ export default {
     // sourceFeatures.addFeatures([feature1, feature2]);
 
     // lineString.setCoordinates(path);
+    /*
     for(let i=0;i<path.length;i++){
       var feature=new ol.Feature({
         geometry: new ol.geom.Point(path[i]),
@@ -891,6 +878,7 @@ export default {
       }));
       sourceFeatures.addFeatures([feature]);
     }
+    */
 
     // var i = 0;
     // //fire the animation
@@ -917,6 +905,35 @@ if (this.timer) {
   }, 1000)
 }
 */
+
+    // 将数据库中的所有点显示在地图上
+
+    this.$axios.get('/api/facilitys')
+      .then(res => {
+        const dotTable=res.data.data;
+        for(var i in dotTable){
+          console.log(transform(Object.values(dotTable[i].location),'EPSG:4326','EPSG:3857'));
+          var feature=new ol.Feature({
+            geometry: new ol.geom.Point(transform(Object.values(dotTable[i].location),'EPSG:4326','EPSG:3857')),
+            name: dotTable[i].id
+          });
+          feature.setStyle(new ol.style.Style({
+            image: new ol.style.Circle({
+              radius: 6, fill: fill, stroke: stroke
+            }),
+            text: new ol.style.Text({
+              text: dotTable[i].id,
+              fill: new ol.style.Fill({color: '#000'}),
+              textAlign: 'left',
+              offsetX: 10
+            })
+          }));
+          sourceFeatures.addFeatures([feature]);
+        }
+      })
+      .catch(err => {
+        console.log('err');
+      });
   },
   updated() {
 

@@ -144,27 +144,18 @@
                   <el-button type="primary" @click="addFacilityFormVisible = false, addFacility()">confirm</el-button>
                 </div>
               </el-dialog>
-              <!--
+              
               <el-dialog title="adding path" :visible.sync="addPathFormVisible">
-                <span>using the position last click to add facility</span>
+                <span>using the position last click to add path</span>
                 <el-form :model="form">
                   <el-form-item label="name" :label-width="formLabelWidth">
-                    <el-input v-model="facilityForm.name" autocomplete="off"></el-input>
-                  </el-form-item>
-                  <el-form-item label="type" :label-width="formLabelWidth">
-                    <el-input v-model="facilityForm.type" autocomplete="off"></el-input>
+                    <el-input v-model="pathForm.type" autocomplete="off"></el-input>
                   </el-form-item>
                   <el-form-item label="departure" :label-width="formLabelWidth">
-                    <el-input v-model="facilityForm.departure" autocomplete="off"></el-input>
+                    <el-input v-model="pathForm.departure" autocomplete="off"></el-input>
                   </el-form-item>
                   <el-form-item label="arrival" :label-width="formLabelWidth">
-                    <el-input v-model="facilityForm.arrival" autocomplete="off"></el-input>
-                  </el-form-item>
-                  <el-form-item label="length" :label-width="formLabelWidth">
-                    <el-input v-model="facilityForm.description" autocomplete="off"></el-input>
-                  </el-form-item>
-                  <el-form-item label="length" :label-width="formLabelWidth">
-                    <el-input v-model="facilityForm.description" autocomplete="off"></el-input>
+                    <el-input v-model="pathForm.arrival" autocomplete="off"></el-input>
                   </el-form-item>
                 </el-form>
                 <div slot="footer" class="dialog-footer">
@@ -172,7 +163,7 @@
                   <el-button type="primary" @click="addPathFormVisible = false,addPath()">confirm</el-button>
                 </div>
               </el-dialog>
-              -->
+             
             </el-button-group>
             <el-tabs type="border-card">
               <el-tab-pane label="travel plan">
@@ -338,6 +329,7 @@ import Map from 'ol/Map';
 import {createStringXY} from 'ol/coordinate';
 import { fromLonLat, toLonLat, transform } from 'ol/proj';
 import { toStringHDMS } from 'ol/coordinate';
+import Text from 'ol/style/Text';
 
 var lastclick = [[0,0],[0,0]], lastclickp = 1;
 export default {
@@ -354,6 +346,7 @@ export default {
       addVehiclesTimetableVisible: false,
       addVehiclesRiskVisible: false,
       addFacilityFormVisible: false,
+      addPathFormVisible: false,
       formLabelWidth: '120px',
       navigateForm: {
         departure: '',
@@ -365,6 +358,11 @@ export default {
         type: '',
         description: '',
         position: ''
+      },
+      pathForm: {
+        type: '',
+        departure: '',
+        arrival: ''
       },
       travelersPlansForm: {
         id: '',
@@ -845,7 +843,14 @@ export default {
           }),
           zIndex: 4
         })
-      ];
+      ],
+      style2 = [
+        new ol.style.Style({
+          image: new ol.style.Circle({
+            radius: 6, fill: fill, stroke: stroke
+          })
+        })
+      ]
 
 
     //a simulated path
@@ -856,35 +861,52 @@ export default {
       [12949287.297571652,4885310.053422529]
     ];
 
-    var feature1 = new ol.Feature({
-      geometry: new ol.geom.Point(path[0])
-    }),
-      feature2 = new ol.Feature({
-        geometry: new ol.geom.Point(path[path.length - 1])
-      });
+    // var feature1 = new ol.Feature({
+    //   geometry: new ol.geom.Point(path[0])
+    // }),
+    //   feature2 = new ol.Feature({
+    //     geometry: new ol.geom.Point(path[path.length - 1])
+    //   });
 
-    feature1.setStyle(style1);
-    feature2.setStyle(style1);
-    sourceFeatures.addFeatures([feature1, feature2]);
+    // feature1.setStyle(style1);
+    // feature2.setStyle(style1);
+    // sourceFeatures.addFeatures([feature1, feature2]);
 
     // lineString.setCoordinates(path);
+    for(let i=0;i<path.length;i++){
+      var feature=new ol.Feature({
+        geometry: new ol.geom.Point(path[i]),
+        name: i
+      });
+      feature.setStyle(new ol.style.Style({
+        image: new ol.style.Circle({
+          radius: 6, fill: fill, stroke: stroke
+        }),
+        text: new ol.style.Text({
+          text: i,
+          fill: new ol.style.Fill({color: '#000'}),
+          textAlign: 'left',
+          offsetX: 10
+        })
+      }));
+      sourceFeatures.addFeatures([feature]);
+    }
 
+    // var i = 0;
+    // //fire the animation
+    // map.once('postcompose', function (event) {
+    //   console.info('postcompose');
+    //   this.interval = setInterval(animation, 500);
+    // });
 
-    var i = 0;
-    //fire the animation
-    map.once('postcompose', function (event) {
-      console.info('postcompose');
-      this.interval = setInterval(animation, 500);
-    });
+    // var animation = function () {
 
-    var animation = function () {
-
-      if (i < path.length) {
-        lineString.setCoordinates(path.slice(0,i+1));
-        marker.setPosition(path[i]);
-        i++;
-      }
-    };
+    //   if (i < path.length) {
+    //     lineString.setCoordinates(path.slice(0,i+1));
+    //     marker.setPosition(path[i]);
+    //     i++;
+    //   }
+    // };
 
   /*
 if (this.timer) {

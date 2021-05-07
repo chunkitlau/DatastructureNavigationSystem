@@ -4,6 +4,9 @@ const {
   createFacility,
   getFacility,
   getFacilitys,
+  createRoad,
+  getRoad,
+  getRoads,
 
   queryToNum,
   getCurrentTime,
@@ -37,6 +40,9 @@ router.get('/', function (req, res, next) {
     post   /facility?name=&type=&position=&description=<br>
     get    /facilitys<br>
     get    /facility<br>
+    post   /road?type=&fromid=&toid=&efficiency=<br>
+    get    /roads<br>
+    get    /road<br>
 
     get    /current/time<br>
     get    /current/status<br>
@@ -90,7 +96,7 @@ router.post('/facility', function (req, res, next) {
   const type = req.query.type || 0
   const dscpn = req.query.description || ''
   console.log(position)
-  const result = createFacility(name,type,position,dscpn)
+  const result = createFacility(name, type, position, dscpn)
   return result.then(result=>{
     res.json(
       new SuccessModel(result)
@@ -98,6 +104,41 @@ router.post('/facility', function (req, res, next) {
   })
 });
 
+router.get('/road', function (req, res, next) {
+  const id = req.query.id
+  const result = getRoad(id)
+  return result.then(result => {
+    res.json(
+      new SuccessModel(result)
+    )
+  })
+  //!
+});
+
+router.get('/roads', function (req, res, next) {
+  const result = getRoads()
+  return result.then(result => {
+    res.json(
+      new SuccessModel(result)
+    )
+  })
+  //!
+});
+
+router.post('/road', function (req, res, next) {
+  const fromid = req.query.fromid
+  const toid = req.query.toid
+  const type = req.query.type
+  const effi = req.query.efficiency || 1.0
+  const result = createRoad(fromid, toid, type, effi)
+  return result.then(result=>{
+    res.json(
+      new SuccessModel(result)
+    )
+  })
+});
+
+/* ------ TRASH ------ */
 router.get('/current/time', function (req, res, next) {
   const result = getCurrentTime()
   res.json(

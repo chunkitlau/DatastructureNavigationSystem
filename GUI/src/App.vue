@@ -37,7 +37,7 @@
               <el-button @click="handleRestart" type="danger" icon="el-icon-refresh-left">reset</el-button>
               <el-button @click="setNavigateFormVisible = true" type="primary" icon="el-icon-s-promotion">navigate</el-button>
               <el-button @click="addFacilityFormVisible = true" type="primary" icon="el-icon-circle-plus-outline">add facility</el-button>
-              <el-button @click="addPathFormVisible = true" type="primary" icon="el-icon-circle-plus-outline">add path</el-button>
+              <el-button @click="addRoadFormVisible = true" type="primary" icon="el-icon-circle-plus-outline">add road</el-button>
               <el-dialog title="navigate" :visible.sync="setNavigateFormVisible">
                 <el-form :model="form">
                   <el-form-item label="departure" :label-width="formLabelWidth">
@@ -145,22 +145,25 @@
                 </div>
               </el-dialog>
               
-              <el-dialog title="adding path" :visible.sync="addPathFormVisible">
-                <span>using the position last click to add path</span>
+              <el-dialog title="adding road" :visible.sync="addRoadFormVisible">
+                <span>using the position last click to add road</span>
                 <el-form :model="form">
-                  <el-form-item label="name" :label-width="formLabelWidth">
-                    <el-input v-model="pathForm.type" autocomplete="off"></el-input>
+                  <el-form-item label="type" :label-width="formLabelWidth">
+                    <el-input v-model="roadForm.type" autocomplete="off"></el-input>
                   </el-form-item>
-                  <el-form-item label="departure" :label-width="formLabelWidth">
-                    <el-input v-model="pathForm.departure" autocomplete="off"></el-input>
+                  <el-form-item label="fromid" :label-width="formLabelWidth">
+                    <el-input v-model="roadForm.fromid" autocomplete="off"></el-input>
                   </el-form-item>
-                  <el-form-item label="arrival" :label-width="formLabelWidth">
-                    <el-input v-model="pathForm.arrival" autocomplete="off"></el-input>
+                  <el-form-item label="toid" :label-width="formLabelWidth">
+                    <el-input v-model="roadForm.toid" autocomplete="off"></el-input>
+                  </el-form-item>
+                  <el-form-item label="efficiency" :label-width="formLabelWidth">
+                    <el-input v-model="roadForm.efficiency" autocomplete="off"></el-input>
                   </el-form-item>
                 </el-form>
                 <div slot="footer" class="dialog-footer">
-                  <el-button @click="addPathFormVisible = false">cancel</el-button>
-                  <el-button type="primary" @click="addPathFormVisible = false,addPath()">confirm</el-button>
+                  <el-button @click="addRoadFormVisible = false">cancel</el-button>
+                  <el-button type="primary" @click="addRoadFormVisible = false, addRoad()">confirm</el-button>
                 </div>
               </el-dialog>
              
@@ -346,7 +349,7 @@ export default {
       addVehiclesTimetableVisible: false,
       addVehiclesRiskVisible: false,
       addFacilityFormVisible: false,
-      addPathFormVisible: false,
+      addRoadFormVisible: false,
       formLabelWidth: '120px',
       navigateForm: {
         departure: '',
@@ -359,10 +362,11 @@ export default {
         description: '',
         position: ''
       },
-      pathForm: {
+      roadForm: {
         type: '',
         departure: '',
-        arrival: ''
+        arrival: '',
+        efficiency: ''
       },
       travelersPlansForm: {
         id: '',
@@ -425,6 +429,16 @@ export default {
       this.facilityForm.position = lastclick[lastclickp]
       console.log(this.facilityForm)
       this.$axios.post(`/api/facility?name=${this.facilityForm.name}&type=${this.facilityForm.type}&position=${this.facilityForm.position}&description=${this.facilityForm.description}`)// !
+        .then(res => {
+          this.citiesRiskForm = {}
+        })
+        .catch(err => {
+          console.log('error', err)
+        })
+    },
+    addRoad() {
+      console.log(this.roadForm)
+      this.$axios.post(`/api/road?type=${this.roadForm.type}&fromid=${this.roadForm.fromid}&toid=${this.roadForm.toid}&efficiency=${this.roadForm.efficiency}`)// !
         .then(res => {
           this.citiesRiskForm = {}
         })
@@ -610,7 +624,7 @@ export default {
       Promise.all(this.vehiclesTimetable.map((value, index) => this.getCitiesLocation(value)))
         .then(res => {
           this.polylines = res.map((value, index) => {
-            value.path = [value.departurePosition, value.arrivalPosition]
+            value.road = [value.departurePosition, value.arrivalPosition]
             value.key = index
             value.borderWeight = 2
             value.lineJoin = 'round'

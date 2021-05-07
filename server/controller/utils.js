@@ -20,6 +20,43 @@ const getCurrentTime = () => {
   return { currentTime: currentTime }
 }
 
+const getFacility = (id) => {
+  const sql = `select * from dottable where id=${id};`
+  return exec(sql)
+}
+
+const getFacilitys = () => {
+  const sql = `select * from dottable;`
+  return exec(sql)
+}
+
+const createFacility = (name, type, position, description) => {
+  position = position.replace(',', ' ')
+  const sql =  `
+    insert into dottable (type, name, location, description) values (${type},'${name}',ST_pointfromtext('POINT(${position})'),'${description}');
+  `
+  console.log(`Insert facility (${type},'${name}',ST_pointfromtext('POINT(${position})'),'${description}')`)
+  return exec(sql)
+}
+const getRoad = (id) => {
+  const sql = `select * from edgetable where id=${id};`
+  return exec(sql)
+}
+
+const getRoads = () => {
+  const sql = `select * from edgetable;`
+  return exec(sql)
+}
+
+const createRoad = (fromid, toid, type, efficiency) => {
+  const sql = `
+    insert into edgetable (type, fromid, toid, efficiency) values (${type},'${fromid}','${toid}','${efficiency}');
+  `
+  console.log(`Insert road: (${type},${fromid},${toid},${efficiency})`)
+  return exec(sql)
+}
+
+/* ------ TRASH ------ */
 const getCurrentStatus = () => {
   return { currentStatus: currentStatus }
 }
@@ -37,25 +74,6 @@ const updateCurrentStatus = (status) => {
 
 const getTravelersStatus = () => {
   const sql = `select * from travelersstatus;`
-  return exec(sql)
-}
-
-const getFacility = (id) => {
-  const sql = `select * from dottable where id=${id};`
-  return exec(sql)
-}
-
-const getFacilitys = () => {
-  const sql = `select * from dottable;`
-  return exec(sql)
-}
-
-const createFacility = (name, type, position, description) => {
-  position = position.replace(',',' ')
-  const sql =  `
-    insert into dottable (type, name, location, description) values (${type},'${name}',ST_pointfromtext('POINT(${position})'),'${description}');
-  `
-  console.log(`(${type},'${name}',ST_pointfromtext('POINT(${position})'),'${description}')`)
   return exec(sql)
 }
 
@@ -176,6 +194,10 @@ module.exports = {
   createFacility,
   getFacility,
   getFacilitys,
+  createRoad,
+  getRoad,
+  getRoads,
+
 
   queryToNum,
   getCurrentTime,

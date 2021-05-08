@@ -30,6 +30,7 @@ const {
   deleteCitiesRisk,
   getLog
 } = require('../controller/utils')
+const {getShortestPath} = require('../controller/model')
 const { SuccessModel, ErrorModel } = require('../model/resModel')
 
 /* GET api listing. */
@@ -43,6 +44,7 @@ router.get('/', function (req, res, next) {
     post   /road?type=&fromid=&toid=&efficiency=<br>
     get    /roads<br>
     get    /road<br>
+    post    /plan?startid=&endid=&type=<br>
 
     get    /current/time<br>
     get    /current/status<br>
@@ -77,7 +79,6 @@ router.get('/facility', function (req, res, next) {
       new SuccessModel(result)
     )
   })
-  //!
 });
 
 router.get('/facilitys', function (req, res, next) {
@@ -87,7 +88,6 @@ router.get('/facilitys', function (req, res, next) {
       new SuccessModel(result)
     )
   })
-  //!
 });
 
 router.post('/facility', function (req, res, next) {
@@ -112,7 +112,6 @@ router.get('/road', function (req, res, next) {
       new SuccessModel(result)
     )
   })
-  //!
 });
 
 router.get('/roads', function (req, res, next) {
@@ -122,7 +121,6 @@ router.get('/roads', function (req, res, next) {
       new SuccessModel(result)
     )
   })
-  //!
 });
 
 router.post('/road', function (req, res, next) {
@@ -131,6 +129,18 @@ router.post('/road', function (req, res, next) {
   const type = req.query.type
   const effi = req.query.efficiency || 1.0
   const result = createRoad(fromid, toid, type, effi)
+  return result.then(result=>{
+    res.json(
+      new SuccessModel(result)
+    )
+  })
+});
+
+router.post('/plan', function (req, res, next) {
+  const startid = req.query.startid
+  const endid = req.query.endid
+  const type = req.query.type
+  const result = getShortestPath(startid, endid, type)
   return result.then(result=>{
     res.json(
       new SuccessModel(result)

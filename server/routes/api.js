@@ -30,8 +30,8 @@ const {
   deleteCitiesRisk,
   getLog
 } = require('../controller/utils')
-const {getShortestPath} = require('../controller/model')
 const { SuccessModel, ErrorModel } = require('../model/resModel')
+const {getShortestPath} = require('../controller/model.js')
 
 /* GET api listing. */
 router.get('/', function (req, res, next) {
@@ -142,6 +142,8 @@ router.post('/plan', function (req, res, next) {
   const type = req.query.type
   const result = getShortestPath(startid, endid, type)
   return result.then(result=>{
+    console.log(`result:${result.answer}`)
+    console.log(result.path)
     res.json(
       new SuccessModel(result)
     )

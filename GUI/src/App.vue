@@ -422,9 +422,15 @@ export default {
           console.log('error', err)
         })
     },
-    // setNavigate() {
-
-    // },
+    setNavigate() {
+      this.$axios.post(`/api/plan?startid=${this.navigateForm.departure}&endid=${this.navigateForm.arrival}&type=${this.navigateForm.strategy}`)
+        .then(res => {
+          console.log(res)
+        })
+        .catch(err => {
+          console.log('error',err)
+        })
+    },
     addFacility() {
       console.log(lastclick[lastclickp]);
       this.facilityForm.position = lastclick[lastclickp]

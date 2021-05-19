@@ -321,12 +321,37 @@ import {createStringXY} from 'ol/coordinate';
 import { fromLonLat, toLonLat, transform } from 'ol/proj';
 import { toStringHDMS } from 'ol/coordinate';
 import Text from 'ol/style/Text';
+import Polyline from 'ol/format/Polyline';
+
+// 声明地图
+var map;
+
+// 坐标格式转换
+function trans(location){
+  return transform(Object.values(location),'EPSG:4326','EPSG:3857');
+}
 
 // 采点
 var lastclick = [[0,0],[0,0]], lastclickp = 1;
 
 // 点表和边表
 var dotTable,edgeTable;
+
+// 本部视角
+var buptMainCampus = new ol.View({
+  center: [12952250, 4860150],
+  zoom: 16.61
+});
+// 沙河视角
+var buptShaheCampus = new ol.View({
+  center: [12944600, 4888600],
+  zoom: 16.6
+});
+// 本部与沙河视角
+var buptCampus = new ol.View({
+  center: [12948425, 4875300],
+  zoom: 11.7
+});
 
 // ol样式
 var styles = {
@@ -336,8 +361,36 @@ var styles = {
       color: 'rgba(237, 212, 0, 0.8)'
     }),
     zIndex: 2
-  })
+  }),
+  'icon': new ol.style.Style({
+    image: new ol.style.Icon({
+      anchor: [0.5, 1],
+      src: 'data/icon.png',
+    }),
+  }),
+  'geoMarker': new ol.style.Style({
+    image: new ol.style.Circle({
+      radius: 7,
+      fill: new ol.style.Fill({color: 'black'}),
+      stroke: new ol.style.Stroke({
+        color: 'white',
+        width: 2,
+      }),
+    }),
+  }),
 };
+
+var animating=false;
+
+// 地图当前视角
+var viewNow = buptShaheCampus;
+
+// 目前的一些features基本上都是往sourceFeatures里面加的
+var sourceFeatures = new ol.source.Vector();
+var layerFeatures = new ol.layer.Vector({ source: sourceFeatures });
+
+// routeData存放导航路径信息
+var routeData;
 
 export default {
   name: 'App',
@@ -653,7 +706,24 @@ export default {
     handlePlay() {
       this.$axios.post('/api/plan?startid=21&endid=8&type=0')// !
         .then(res => {
-          console.log(res.data)
+          routeData=res.data;
+          var polyline=new Array(trans(dotTable.find(o=>o.id===routeData.data.path[0].fromid).location));
+          console.log(routeData.data.path);
+          for(var i in routeData.data.path){
+            polyline.push(trans(dotTable.find(o=>o.id===routeData.data.path[i].toid).location));
+          }
+          var route=new ol.geom.LineString(polyline);
+          var routeFeature=new ol.Feature({
+            geometry: route
+          });
+          var routeLayer=new ol.layer.Vector({
+            source: new ol.source.Vector({
+              features: [routeFeature]
+            }),
+            style: styles['route'],
+            updateWhileAnimating: true
+          });
+          map.addLayer(routeLayer);
         })
         .catch(err => {
           console.log('error', err)
@@ -758,44 +828,8 @@ export default {
     }, 2000)
   },
   mounted() {
-    // 本部视角
-    var bputMainCampus = new ol.View({
-      center: [12952250, 4860150],
-      zoom: 16.61
-    })
-    // 沙河视角
-    var bputShaheCampus = new ol.View({
-      center: [12944600, 4888600],
-      zoom: 16.6
-    })
-
-    // 本部与沙河视角
-    var bputCampus = new ol.View({
-      center: [12948425, 4875300],
-      zoom: 11.7
-    })
-
-    // 地图当前视角
-    var viewNow = bputShaheCampus;
-
-    // 目前的一些features基本上都是往sourceFeatures里面加的
-    var sourceFeatures = new ol.source.Vector();
-    var layerFeatures = new ol.layer.Vector({ source: sourceFeatures });
-
-    // lineString是路径，用于layerRoute层中
-    var lineString = new ol.geom.LineString([]);
-    var layerRoute = new ol.layer.Vector({
-      source: new ol.source.Vector({
-        features: [
-          new ol.Feature({ geometry: lineString })
-        ]
-      }),
-      style: styles['route'],
-      updateWhileAnimating: true
-    });
-
     // 地图对象，有layerRoute和layerFeatures层
-    var map = new ol.Map({
+    map = new ol.Map({
       target: 'map',
       view: viewNow,
       renderer: 'canvas',
@@ -804,7 +838,7 @@ export default {
           source: new ol.source.OSM(),
           opacity: 0.6
         }),
-        layerRoute, layerFeatures
+        layerFeatures
       ]
     });
 
@@ -890,8 +924,7 @@ export default {
               var fromLoc=dotTable.find(o => o.id === edgeTable[i].fromid).location;
               var toLoc=dotTable.find(o => o.id === edgeTable[i].toid).location;
               var points=new Array(
-                transform(Object.values(fromLoc),'EPSG:4326','EPSG:3857'),
-                transform(Object.values(toLoc),'EPSG:4326','EPSG:3857')
+                trans(fromLoc),trans(toLoc)
               );
               var line=new ol.geom.LineString(points);
               var layerEdge = new ol.layer.Vector({
@@ -918,90 +951,9 @@ export default {
               map.addLayer(layerEdge);
             }
           })
-        .catch(err => {
-          console.log(err);
-        });
       }).catch(err => {
         console.log(err);
       })
-
-/*
-    // 一个marker
-    var markerEl = document.getElementById('geo-marker');
-    var marker = new ol.Overlay({
-      //positioning: 'center-center',
-      offset: [-9, -5],
-      element: markerEl,
-      stopEvent: false
-    });
-    map.addOverlay(marker);
-
-    var path = [
-      [12952250, 4860150],
-      [12944600, 4888600],
-      [12949287.297571652,4885310.053422529]
-    ];
-
-    console.log(path);
-
-    var feature1 = new ol.Feature({
-      geometry: new ol.geom.Point(path[0])
-    }),
-      feature2 = new ol.Feature({
-        geometry: new ol.geom.Point(path[path.length - 1])
-      });
-
-    feature1.setStyle(style1);
-    feature2.setStyle(style1);
-    sourceFeatures.addFeatures([feature1, feature2]);
-
-    lineString.setCoordinates(path);
-    
-    for(let i=0;i<path.length;i++){
-      var feature=new ol.Feature({
-        geometry: new ol.geom.Point(path[i]),
-        name: i
-      });
-      feature.setStyle(new ol.style.Style({
-        image: new ol.style.Circle({
-          radius: 6, fill: fill, stroke: stroke
-        }),
-        text: new ol.style.Text({
-          text: i,
-          fill: new ol.style.Fill({color: '#000'}),
-          textAlign: 'left',
-          offsetX: 10
-        })
-      }));
-      sourceFeatures.addFeatures([feature]);
-    }
-
-    var i = 0;
-    //fire the animation
-    map.once('postcompose', function (event) {
-      console.info('postcompose');
-      this.interval = setInterval(animation, 500);
-    });
-
-    var animation = function () {
-
-      if (i < path.length) {
-        lineString.setCoordinates(path.slice(0,i+1));
-        console.log(lineString);
-        marker.setPosition(path[i]);
-        i++;
-      }
-    };
-*/
-/*
-if (this.timer) {
-  clearInterval(this.timer)
-} else {
-  this.timer = setInterval(() => {
-    this.updateData()
-  }, 1000)
-}
-*/
   },
   updated() {
 

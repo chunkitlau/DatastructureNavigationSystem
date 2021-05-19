@@ -12,16 +12,6 @@
           <div id="popup" title="">
           </div>
         </div>
-        <!--
-          <canvas ref="canvas" width="930" height="660">
-          </canvas>
-  -->
-        <!--
-          <el-amap ref="myMap" vid="amapDemo" :amap-manager="amapManager">
-            <el-amap-marker v-if="marker.cityPosition" v-for="marker in markers" :key='marker.city' :position="marker.cityPosition"></el-amap-marker>
-            <el-amap-polyline v-if="polyline.path && polyline.path[0] && polyline.path[1]" v-for="polyline in polylines" :key='polyline.key' :path="polyline.path"></el-amap-polyline>
-          </el-amap>
-  -->
       </el-main>
       <el-aside width="35%">
         <el-container>
@@ -144,7 +134,6 @@
                   <el-button type="primary" @click="addFacilityFormVisible = false, addFacility()">confirm</el-button>
                 </div>
               </el-dialog>
-              
               <el-dialog title="adding road" :visible.sync="addRoadFormVisible">
                 <span>using the position last click to add road</span>
                 <el-form :model="form">
@@ -166,7 +155,6 @@
                   <el-button type="primary" @click="addRoadFormVisible = false, addRoad()">confirm</el-button>
                 </div>
               </el-dialog>
-             
             </el-button-group>
             <el-tabs type="border-card">
               <el-tab-pane label="travel plan">
@@ -334,8 +322,23 @@ import { fromLonLat, toLonLat, transform } from 'ol/proj';
 import { toStringHDMS } from 'ol/coordinate';
 import Text from 'ol/style/Text';
 
+// 采点
 var lastclick = [[0,0],[0,0]], lastclickp = 1;
+
+// 点表和边表
 var dotTable,edgeTable;
+
+// ol样式
+var styles = {
+  'route': new ol.style.Style({
+    stroke: new ol.style.Stroke({
+      width: 6,
+      color: 'rgba(237, 212, 0, 0.8)'
+    }),
+    zIndex: 2
+  })
+};
+
 export default {
   name: 'App',
   data() {
@@ -648,9 +651,9 @@ export default {
         })
     },
     handlePlay() {
-      this.$axios.put('/api/current/status?operation=0')// !
+      this.$axios.post('/api/plan?startid=21&endid=8&type=0')// !
         .then(res => {
-          // console.log(res.data)
+          console.log(res.data)
         })
         .catch(err => {
           console.log('error', err)
@@ -755,43 +758,43 @@ export default {
     }, 2000)
   },
   mounted() {
+    // 本部视角
     var bputMainCampus = new ol.View({
       center: [12952250, 4860150],
       zoom: 16.61
     })
+    // 沙河视角
     var bputShaheCampus = new ol.View({
       center: [12944600, 4888600],
       zoom: 16.6
     })
+
+    // 本部与沙河视角
     var bputCampus = new ol.View({
       center: [12948425, 4875300],
       zoom: 11.7
     })
+
+    // 地图当前视角
     var viewNow = bputShaheCampus;
 
-    var sourceFeatures = new ol.source.Vector(),
-      layerFeatures = new ol.layer.Vector({ source: sourceFeatures });
+    // 目前的一些features基本上都是往sourceFeatures里面加的
+    var sourceFeatures = new ol.source.Vector();
+    var layerFeatures = new ol.layer.Vector({ source: sourceFeatures });
 
+    // lineString是路径，用于layerRoute层中
     var lineString = new ol.geom.LineString([]);
-
     var layerRoute = new ol.layer.Vector({
       source: new ol.source.Vector({
         features: [
           new ol.Feature({ geometry: lineString })
         ]
       }),
-      style: [
-        new ol.style.Style({
-          stroke: new ol.style.Stroke({
-            width: 3, color: 'rgba(0, 0, 0, 1)',
-            lineDash: [.1, 5]
-          }),
-          zIndex: 2
-        })
-      ],
+      style: styles['route'],
       updateWhileAnimating: true
     });
 
+    // 地图对象，有layerRoute和layerFeatures层
     var map = new ol.Map({
       target: 'map',
       view: viewNow,
@@ -805,15 +808,11 @@ export default {
       ]
     });
 
-    var pos = fromLonLat([16.3725, 48.208889]);
-    
     // Popup showing the position the user clicked
     var popup = new ol.Overlay({
       element: document.getElementById('popup'),
     });
     map.addOverlay(popup);
-
-    
     map.on('singleclick', function (evt) {
       //this.visible = ture;
       var element = popup.getElement();
@@ -837,17 +836,7 @@ export default {
       $(element).popover('show');
     });
     
-
-    var markerEl = document.getElementById('geo-marker');
-    var marker = new ol.Overlay({
-      //positioning: 'center-center',
-      offset: [-9, -5],
-      element: markerEl,
-      stopEvent: false
-    });
-    map.addOverlay(marker);
-
-
+    // 下面两个函数用到的一些样式
     var fill = new ol.style.Fill({ color: 'rgba(255,255,255,1)' }),
       stroke = new ol.style.Stroke({ color: 'rgba(0,0,0,1)' }),
       style1 = [
@@ -868,7 +857,85 @@ export default {
         })
       ]
 
+    // 将数据库中的所有点显示在地图上
+    this.$axios.get('/api/facilitys')
+      .then(res => {
+        dotTable=res.data.data;
+        // console.log(dotTable);
+        for(var i in dotTable){
+          var feature=new ol.Feature({
+            geometry: new ol.geom.Point(transform(Object.values(dotTable[i].location),'EPSG:4326','EPSG:3857')),
+            name: dotTable[i].id
+          });
+          feature.setStyle(new ol.style.Style({
+            image: new ol.style.Circle({
+              radius: 6, fill: fill, stroke: stroke
+            }),
+            text: new ol.style.Text({
+              text: dotTable[i].id,
+              fill: new ol.style.Fill({color: '#000'}),
+              textAlign: 'left',
+              offsetX: 10
+            })
+          }));
+          sourceFeatures.addFeatures([feature]);
+        }
+      }).then(res => {
+        // 将数据库中的所有边显示在地图上
+        this.$axios.get('/api/roads')
+          .then(res => {
+            var edgeColor=['#333399','#ff9900','#009900','#cc0000'];
+            edgeTable=res.data.data;
+            for(var i in edgeTable){
+              var fromLoc=dotTable.find(o => o.id === edgeTable[i].fromid).location;
+              var toLoc=dotTable.find(o => o.id === edgeTable[i].toid).location;
+              var points=new Array(
+                transform(Object.values(fromLoc),'EPSG:4326','EPSG:3857'),
+                transform(Object.values(toLoc),'EPSG:4326','EPSG:3857')
+              );
+              var line=new ol.geom.LineString(points);
+              var layerEdge = new ol.layer.Vector({
+                source: new ol.source.Vector({
+                  features: [
+                    new ol.Feature({ geometry: line })
+                  ]
+                }),
+                style: [
+                  new ol.style.Style({
+                    stroke: new ol.style.Stroke({
+                      width: 3,
+                      color: edgeColor[edgeTable[i].type],
+                      lineDash: [.1, 5]
+                    }),
+                    text: new ol.style.Text({
+                      font: '16px sans-serif',
+                      text: edgeTable[i].id,
+                      fill: new ol.style.Fill({color: '#000'})
+                    })
+                  })
+                ]
+              });
+              map.addLayer(layerEdge);
+            }
+          })
+        .catch(err => {
+          console.log(err);
+        });
+      }).catch(err => {
+        console.log(err);
+      })
+
 /*
+    // 一个marker
+    var markerEl = document.getElementById('geo-marker');
+    var marker = new ol.Overlay({
+      //positioning: 'center-center',
+      offset: [-9, -5],
+      element: markerEl,
+      stopEvent: false
+    });
+    map.addOverlay(marker);
+
     var path = [
       [12952250, 4860150],
       [12944600, 4888600],
@@ -935,78 +1002,6 @@ if (this.timer) {
   }, 1000)
 }
 */
-
-    // 将数据库中的所有点显示在地图上
-
-    this.$axios.get('/api/facilitys')
-      .then(res => {
-        dotTable=res.data.data;
-        // console.log(dotTable);
-        for(var i in dotTable){
-          var feature=new ol.Feature({
-            geometry: new ol.geom.Point(transform(Object.values(dotTable[i].location),'EPSG:4326','EPSG:3857')),
-            name: dotTable[i].id
-          });
-          feature.setStyle(new ol.style.Style({
-            image: new ol.style.Circle({
-              radius: 6, fill: fill, stroke: stroke
-            }),
-            text: new ol.style.Text({
-              text: dotTable[i].id,
-              fill: new ol.style.Fill({color: '#000'}),
-              textAlign: 'left',
-              offsetX: 10
-            })
-          }));
-          sourceFeatures.addFeatures([feature]);
-        }
-      })
-      .catch(err => {
-        console.log('err');
-      });
-
-      // 将数据库中的所有边显示在地图上
-  
-      this.$axios.get('/api/roads')
-        .then(res => {
-          var edgeColor=['#333399','#ff9900','#009900','#cc0000'];
-          edgeTable=res.data.data;
-          for(var i in edgeTable){
-            var fromLoc=dotTable.find(o => o.id === edgeTable[i].fromid).location;
-            var toLoc=dotTable.find(o => o.id === edgeTable[i].toid).location;
-            var points=new Array(
-              transform(Object.values(fromLoc),'EPSG:4326','EPSG:3857'),
-              transform(Object.values(toLoc),'EPSG:4326','EPSG:3857')
-            );
-            var line=new ol.geom.LineString(points);
-            var layerEdge = new ol.layer.Vector({
-              source: new ol.source.Vector({
-                features: [
-                  new ol.Feature({ geometry: line })
-                ]
-              }),
-              style: [
-                new ol.style.Style({
-                  stroke: new ol.style.Stroke({
-                    width: 3,
-                    color: edgeColor[edgeTable[i].type],
-                    lineDash: [.1, 5]
-                  }),
-                  text: new ol.style.Text({
-                    font: '16px sans-serif',
-                    text: edgeTable[i].id,
-                    fill: new ol.style.Fill({color: '#000'})
-                  })
-                })
-              ]
-            });
-            map.addLayer(layerEdge);
-          }
-        })
-      .catch(err => {
-        console.log(err);
-      });
-      
   },
   updated() {
 
@@ -1016,6 +1011,7 @@ if (this.timer) {
   }
 }
 </script>
+
 <style>
 
   #marker {

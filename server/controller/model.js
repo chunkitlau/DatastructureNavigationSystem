@@ -1,7 +1,7 @@
 const { exec } = require('../database/mysql')
 
 const DEBUG = 0
-const TEST = 1
+const TEST = 0
 const DEFAULT_RADIUS = 6371008.8
 const SPEED = [1.4, 4.2, 8.4, 13.9]
 

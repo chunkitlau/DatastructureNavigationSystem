@@ -15,7 +15,7 @@ function exec(sql) {
       resolve(result)
     })
   }).catch(err => {
-    console.log('error', err)
+    console.log('ERROR!\n', err)
   })
   return promise
 }

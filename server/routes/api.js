@@ -3,6 +3,7 @@ var router = express.Router();
 const {
   createFacility,
   getFacility,
+  updateFacility,
   getFacilitys,
   getFacilitysAround,
   createRoad,
@@ -40,8 +41,9 @@ router.get('/', function (req, res, next) {
     api list:<br> (following 'ip:port/api')
     
     post   /facility?name=&type=&position=&description=<br>
-    get    /facilitys<br>
+    get    /facilitys?description=<br>
     get    /facility<br>
+    put    /facility?id=&description=<br>
     get    /facilitys/around?distance=<br>
     post   /road?type=&fromid=&toid=&efficiency=<br>
     get    /roads<br>
@@ -84,7 +86,8 @@ router.get('/facility', function (req, res, next) {
 });
 
 router.get('/facilitys', function (req, res, next) {
-  const result = getFacilitys()
+  const desc =  req.query.description || ''
+  const result = getFacilitys(desc)
   return result.then(result => {
     res.json(
       new SuccessModel(result)
@@ -96,6 +99,17 @@ router.get('/facilitys/around', function (req, res, next) {
   const nowlocation = req.query.position
   const distance = req.query.distance || 50
   const result = getFacilitysAround(nowlocation, distance)
+  return result.then(result => {
+    res.json(
+      new SuccessModel(result)
+    )
+  })
+});
+
+router.put('/facility', function (req, res, next) {
+  const id = req.query.id
+  const description = req.query.description || ''
+  const result = updateFacility(id, description)
   return result.then(result => {
     res.json(
       new SuccessModel(result)

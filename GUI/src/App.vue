@@ -410,8 +410,20 @@ var sourceFeatures = new ol.source.Vector();
 var layerFeatures = new ol.layer.Vector({ source: sourceFeatures });
 
 // routeData存放导航路径信息
-var routeData,route,routeFeature,routeLayer;
+var routeData,route;
+
+// 导航的一些features
+var routeFeature=new ol.Feature();
+var startMarker = new ol.Feature(), stopMarker=new ol.Feature();
+var lineStringFeature = new ol.Feature();
 var lineString=new ol.geom.LineString([]);
+
+// 导航layer
+var routeLayer=new ol.layer.Vector({
+  source: new ol.source.Vector({
+    features: [routeFeature,startMarker,stopMarker,lineStringFeature]
+  })
+});
 
 export default {
   name: 'App',
@@ -725,34 +737,24 @@ export default {
         })
     },
     handlePlay() {
-      this.$axios.post('/api/plan?startid=21&endid=8&type=0')// !
+      this.$axios.post(`/api/plan?startid=${this.navigateForm.departure}&endid=${this.navigateForm.arrival}&type=${this.navigateForm.strategy}`)// !
         .then(res => {
+          lineString.setCoordinates([]);
           routeData=res.data;
           var polyline=new Array(trans(dotTable.find(o=>o.id===routeData.data.path[0].fromid).location));
           for(var i in routeData.data.path){
             polyline.push(trans(dotTable.find(o=>o.id===routeData.data.path[i].toid).location));
           }
-          route=new ol.geom.LineString(polyline);
-          routeFeature=new ol.Feature({
-            geometry: route,
-          });
-          routeFeature.setStyle(styles['route']);
-          var startMarker = new ol.Feature({
-            geometry: new ol.geom.Point(polyline[0]),
-          });
-          var stopMarker = new ol.Feature({
-            geometry: new ol.geom.Point(polyline[polyline.length-1])
-          });
+          startMarker.setGeometry(new ol.geom.Point(polyline[0]));
           startMarker.setStyle(styles['icon']);
+          marker.setPosition(polyline[0]);
+          stopMarker.setGeometry(new ol.geom.Point(polyline[polyline.length-1]));
           stopMarker.setStyle(styles['icon']);
-          var lineStringFeature=new ol.Feature({geometry: lineString});
+          route=new ol.geom.LineString(polyline);
+          routeFeature.setGeometry(route);
+          routeFeature.setStyle(styles['route']);
+          lineStringFeature.setGeometry(lineString);
           lineStringFeature.setStyle(styles['route1']);
-          routeLayer=new ol.layer.Vector({
-            source: new ol.source.Vector({
-              features: [routeFeature,startMarker,stopMarker,lineStringFeature]
-            })
-          });
-          map.addLayer(routeLayer);
           var i = 0;
           //fire the animation
           map.once('postcompose', function (event) {
@@ -880,7 +882,7 @@ export default {
           source: new ol.source.OSM(),
           opacity: 0.6
         }),
-        layerFeatures
+        layerFeatures, routeLayer
       ]
     });
 

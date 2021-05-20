@@ -321,7 +321,12 @@ import {createStringXY} from 'ol/coordinate';
 import { fromLonLat, toLonLat, transform } from 'ol/proj';
 import { toStringHDMS } from 'ol/coordinate';
 import Text from 'ol/style/Text';
+import Feature from 'ol/Feature';
+import Point from 'ol/geom/Point';
 import Polyline from 'ol/format/Polyline';
+import VectorSource from 'ol/source/Vector';
+import View from 'ol/View';
+import XYZ from 'ol/source/XYZ';
 
 // 声明地图
 var map;
@@ -333,6 +338,7 @@ function trans(location){
 
 // 采点
 var lastclick = [[0,0],[0,0]], lastclickp = 1;
+var markerEl,marker;
 
 // 点表和边表
 var dotTable,edgeTable;
@@ -358,16 +364,32 @@ var styles = {
   'route': new ol.style.Style({
     stroke: new ol.style.Stroke({
       width: 6,
-      color: 'rgba(237, 212, 0, 0.8)'
+      color: [237, 212, 0, 0.8]
     }),
-    zIndex: 2
   }),
-  'icon': new ol.style.Style({
+  'route1': new ol.style.Style({
+    stroke: new ol.style.Stroke({
+      width: 6,
+      color: [0, 212, 0, 0.8]
+    }),
+  }),
+  'icon': [new ol.style.Style({
     image: new ol.style.Icon({
+      scale: .7, opacity: 1,
+      rotateWithView: false,
+      anchorXUnits: 'fraction', anchorYUnits: 'fraction',
       anchor: [0.5, 1],
-      src: 'data/icon.png',
+      src: '//raw.githubusercontent.com/jonataswalker/map-utils/master/images/marker.png',
     }),
-  }),
+    zIndex: 5
+  }),new ol.style.Style({
+    image: new ol.style.Circle({
+      radius: 6,
+      fill: new ol.style.Fill({ color: 'rgba(255,255,255,1)' }),
+    }),
+    zIndex: 4
+  })],
+
   'geoMarker': new ol.style.Style({
     image: new ol.style.Circle({
       radius: 7,
@@ -380,8 +402,6 @@ var styles = {
   }),
 };
 
-var animating=false;
-
 // 地图当前视角
 var viewNow = buptShaheCampus;
 
@@ -390,7 +410,8 @@ var sourceFeatures = new ol.source.Vector();
 var layerFeatures = new ol.layer.Vector({ source: sourceFeatures });
 
 // routeData存放导航路径信息
-var routeData;
+var routeData,route,routeFeature,routeLayer;
+var lineString=new ol.geom.LineString([]);
 
 export default {
   name: 'App',
@@ -708,22 +729,43 @@ export default {
         .then(res => {
           routeData=res.data;
           var polyline=new Array(trans(dotTable.find(o=>o.id===routeData.data.path[0].fromid).location));
-          console.log(routeData.data.path);
           for(var i in routeData.data.path){
             polyline.push(trans(dotTable.find(o=>o.id===routeData.data.path[i].toid).location));
           }
-          var route=new ol.geom.LineString(polyline);
-          var routeFeature=new ol.Feature({
-            geometry: route
+          route=new ol.geom.LineString(polyline);
+          routeFeature=new ol.Feature({
+            geometry: route,
           });
-          var routeLayer=new ol.layer.Vector({
+          routeFeature.setStyle(styles['route']);
+          var startMarker = new ol.Feature({
+            geometry: new ol.geom.Point(polyline[0]),
+          });
+          var stopMarker = new ol.Feature({
+            geometry: new ol.geom.Point(polyline[polyline.length-1])
+          });
+          startMarker.setStyle(styles['icon']);
+          stopMarker.setStyle(styles['icon']);
+          var lineStringFeature=new ol.Feature({geometry: lineString});
+          lineStringFeature.setStyle(styles['route1']);
+          routeLayer=new ol.layer.Vector({
             source: new ol.source.Vector({
-              features: [routeFeature]
-            }),
-            style: styles['route'],
-            updateWhileAnimating: true
+              features: [routeFeature,startMarker,stopMarker,lineStringFeature]
+            })
           });
           map.addLayer(routeLayer);
+          var i = 0;
+          //fire the animation
+          map.once('postcompose', function (event) {
+            console.info('postcompose');
+            this.interval = setInterval(animation, 500);
+          });
+          var animation = function () {
+            if (i < polyline.length) {
+              lineString.setCoordinates(polyline.slice(0,i+1));
+              marker.setPosition(polyline[i]);
+              i++;
+            }
+          };
         })
         .catch(err => {
           console.log('error', err)
@@ -950,10 +992,21 @@ export default {
               });
               map.addLayer(layerEdge);
             }
+          }).catch(err => {
+            console.log(err);
           })
       }).catch(err => {
         console.log(err);
-      })
+      });
+    
+    markerEl = document.getElementById('geo-marker');
+    marker = new ol.Overlay({
+      offset: [-9, -5],
+      element: markerEl,
+      stopEvent: false
+    });
+    map.addOverlay(marker);
+      
   },
   updated() {
 

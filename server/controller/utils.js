@@ -3,30 +3,20 @@ const { exec } = require('../database/mysql')
 var currentTime = 0
 var currentStatus = 1
 
-const queryToNum = (query) => {
-  let result = Number(query)
-  if (result === 0 && query !== '0') {
-    result = NaN
-  }
-  return result
-}
-
-const timeCounter = setInterval(function () {
-  currentTime += currentStatus === 0
-  //console.log(currentTime)
-}, 10000)
-
-const getCurrentTime = () => {
-  return { currentTime: currentTime }
-}
-
 const getFacility = (id) => {
   const sql = `select * from dottable where id=${id};`
   return exec(sql)
 }
 
-const getFacilitys = () => {
-  const sql = `select * from dottable;`
+const updateFacility = (id, description) => {
+  const sql = `update dottable set description='${description}' where id=${id};`
+  return exec(sql)
+}
+
+const getFacilitys = (desc) => {
+  var sql
+  if (desc == '') sql = `select * from dottable`
+  else sql = `select * from dottable where name REGEXP '${desc}' and type != 0 union select * from dottable where description REGEXP '${desc}' and type != 0;`
   return exec(sql)
 }
 
@@ -67,6 +57,24 @@ const createRoad = (fromid, toid, type, efficiency) => {
 
 
 /* ------ TRASH ------ */
+
+const queryToNum = (query) => {
+  let result = Number(query)
+  if (result === 0 && query !== '0') {
+    result = NaN
+  }
+  return result
+}
+
+const timeCounter = setInterval(function () {
+  currentTime += currentStatus === 0
+  //console.log(currentTime)
+}, 10000)
+
+const getCurrentTime = () => {
+  return { currentTime: currentTime }
+}
+
 const getCurrentStatus = () => {
   return { currentStatus: currentStatus }
 }
@@ -203,6 +211,7 @@ const getLog = () => {
 module.exports = {
   createFacility,
   getFacility,
+  updateFacility,
   getFacilitys,
   getFacilitysAround,
   createRoad,

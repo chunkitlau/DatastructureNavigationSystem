@@ -30,6 +30,11 @@ const getFacilitys = () => {
   return exec(sql)
 }
 
+const getFacilitysAround = (nowlocation, distance) => {
+  const sql = `SELECT *, ST_Distance_sphere(Point(${nowlocation}), location) as dist FROM dottable having dist < ${distance} ORDER BY dist;`
+  return exec(sql)
+}
+
 const createFacility = (name, type, position, description) => {
   position = position.replace(',', ' ')
   const sql =  `
@@ -38,6 +43,7 @@ const createFacility = (name, type, position, description) => {
   console.log(`Insert facility (${type},'${name}',ST_pointfromtext('POINT(${position})'),'${description}')`)
   return exec(sql)
 }
+
 const getRoad = (id) => {
   const sql = `select * from edgetable where id=${id};`
   return exec(sql)
@@ -55,6 +61,10 @@ const createRoad = (fromid, toid, type, efficiency) => {
   console.log(`Insert road: (${type},${fromid},${toid},${efficiency})`)
   return exec(sql)
 }
+
+
+
+
 
 /* ------ TRASH ------ */
 const getCurrentStatus = () => {
@@ -194,6 +204,7 @@ module.exports = {
   createFacility,
   getFacility,
   getFacilitys,
+  getFacilitysAround,
   createRoad,
   getRoad,
   getRoads,

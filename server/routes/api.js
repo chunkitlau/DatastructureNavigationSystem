@@ -4,6 +4,7 @@ const {
   createFacility,
   getFacility,
   getFacilitys,
+  getFacilitysAround,
   createRoad,
   getRoad,
   getRoads,
@@ -31,7 +32,7 @@ const {
   getLog
 } = require('../controller/utils')
 const { SuccessModel, ErrorModel } = require('../model/resModel')
-const {getShortestPath} = require('../controller/model.js')
+const {getShortestPath, getPassbyShortestPath} = require('../controller/model.js')
 
 /* GET api listing. */
 router.get('/', function (req, res, next) {
@@ -41,10 +42,11 @@ router.get('/', function (req, res, next) {
     post   /facility?name=&type=&position=&description=<br>
     get    /facilitys<br>
     get    /facility<br>
+    get    /facilitys/around?distance=<br>
     post   /road?type=&fromid=&toid=&efficiency=<br>
     get    /roads<br>
     get    /road<br>
-    post    /plan?startid=&endid=&type=<br>
+    post   /plan?startid=&endid=&type=<br>
 
     get    /current/time<br>
     get    /current/status<br>
@@ -83,6 +85,17 @@ router.get('/facility', function (req, res, next) {
 
 router.get('/facilitys', function (req, res, next) {
   const result = getFacilitys()
+  return result.then(result => {
+    res.json(
+      new SuccessModel(result)
+    )
+  })
+});
+
+router.get('/facilitys/around', function (req, res, next) {
+  const nowlocation = req.query.position
+  const distance = req.query.distance || 50
+  const result = getFacilitysAround(nowlocation, distance)
   return result.then(result => {
     res.json(
       new SuccessModel(result)
@@ -140,7 +153,11 @@ router.post('/plan', function (req, res, next) {
   const startid = req.query.startid
   const endid = req.query.endid
   const type = req.query.type
-  const result = getShortestPath(startid, endid, type)
+  const passby = req.query.passby || null
+  var result
+  console.log(startid,endid,type,passby);
+  if(type == 2) result = getPassbyShortestPath(startid, endid, passby)
+  else result = getShortestPath(startid, endid, type)
   return result.then(result=>{
     console.log(`result:${result.answer}`)
     console.log(result.path)
@@ -150,7 +167,21 @@ router.post('/plan', function (req, res, next) {
   })
 });
 
+
+module.exports = router;
+
+
+
+
+
+
+
+
+
+
+
 /* ------ TRASH ------ */
+
 router.get('/current/time', function (req, res, next) {
   const result = getCurrentTime()
   res.json(
@@ -395,5 +426,3 @@ router.post('/login', function (req, res, next) {
     }
   })
 });
-
-module.exports = router;

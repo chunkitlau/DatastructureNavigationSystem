@@ -54,9 +54,6 @@
                     <el-button @click="addDialogFormVisible = false, addVehiclesTimetableVisible = true" type="primary" icon="el-icon-circle-plus-outline">add vehicles timetable</el-button>
                   </el-row>
                   <el-row>
-                    <el-button @click="addDialogFormVisible = false, addVehiclesRiskVisible = true" type="primary" icon="el-icon-circle-plus-outline">add vehicles risk</el-button>
-                  </el-row>
-                  <el-row>
                     <el-button @click="addDialogFormVisible = false, addCitiesRiskVisible = true" type="primary" icon="el-icon-circle-plus-outline">add cities risk</el-button>
                   </el-row>
                 </el-form>
@@ -185,44 +182,16 @@
                   </el-table-column>
                 </el-table>
               </el-tab-pane>
-              <el-tab-pane label="facility(nearby)">
-                <el-table :data="citiesRisk"
+              <el-tab-pane label="facilitys">
+                <el-table :data="facilitys"
                           height="500"
                           stripe
                           style="width: 100%">
-                  <el-table-column prop="city"
-                                   label="name"
+                  <el-table-column prop="id"
+                                   label="id"
                                    width="60">
                   </el-table-column>
-                  <el-table-column prop="city"
-                                   label="type"
-                                   width="60">
-                  </el-table-column>
-                  <el-table-column prop="city"
-                                   label="position"
-                                   width="120">
-                  </el-table-column>
-                  <el-table-column prop="city"
-                                   label="description"
-                                   width="120">
-                  </el-table-column>
-                  <el-table-column label="operation" width="180">
-                    <template slot-scope="scope">
-                      <el-button size="mini"
-                                 @click="editCitiesRisk(scope.$index, scope.row)">edit</el-button>
-                      <el-button size="mini"
-                                 type="danger"
-                                 @click="deleteCitiesRisk(scope.$index, scope.row)">delete</el-button>
-                    </template>
-                  </el-table-column>
-                </el-table>
-              </el-tab-pane>
-              <el-tab-pane label="path">
-                <el-table :data="vehiclesTimetable"
-                          height="500"
-                          stripe
-                          style="width: 100%">
-                  <el-table-column prop="number"
+                  <el-table-column prop="name"
                                    label="name"
                                    width="60">
                   </el-table-column>
@@ -230,33 +199,71 @@
                                    label="type"
                                    width="60">
                   </el-table-column>
-                  <el-table-column prop="departure"
-                                   label="departure"
-                                   width="90">
+                  <el-table-column prop="location"
+                                   label="location"
+                                   width="120">
                   </el-table-column>
-                  <el-table-column prop="arrival"
-                                   label="arrival"
-                                   width="90">
-                  </el-table-column>
-                  <el-table-column prop="arrivalTime"
-                                   label="length"
-                                   width="90">
-                  </el-table-column>
-                  <el-table-column prop="arrivalTime"
-                                   label="transit time"
-                                   width="90">
-                  </el-table-column>
-                  <el-table-column prop="arrivalTime"
-                                   label="crowdedness"
-                                   width="90">
+                  <el-table-column prop="description"
+                                   label="description"
+                                   width="120">
                   </el-table-column>
                   <el-table-column label="operation" width="180">
                     <template slot-scope="scope">
                       <el-button size="mini"
-                                 @click="editVehiclesTimetable(scope.$index, scope.row)">edit</el-button>
+                                 @click="editFacilitys(scope.$index, scope.row)">edit</el-button>
                       <el-button size="mini"
                                  type="danger"
-                                 @click="deleteVehiclesTimetable(scope.$index, scope.row)">delete</el-button>
+                                 @click="deleteFacilitys(scope.$index, scope.row)">delete</el-button>
+                    </template>
+                  </el-table-column>
+                </el-table>
+              </el-tab-pane>
+              <el-tab-pane label="paths">
+                <el-table :data="paths"
+                          height="500"
+                          stripe
+                          style="width: 100%">
+                  <el-table-column prop="id"
+                                   label="id"
+                                   width="60">
+                  </el-table-column>
+                  <el-table-column prop="type"
+                                   label="type"
+                                   width="60">
+                  </el-table-column>
+                  <el-table-column prop="fromid"
+                                   label="fromid"
+                                   width="90">
+                  </el-table-column>
+                  <el-table-column prop="toid"
+                                   label="toid"
+                                   width="90">
+                  </el-table-column>
+                  <el-table-column prop="efficiency"
+                                   label="efficiency"
+                                   width="90">
+                  </el-table-column>
+                  <!--
+                  <el-table-column prop=""
+                                   label="length"
+                                   width="90">
+                  </el-table-column>
+                  <el-table-column prop=""
+                                   label="transit time"
+                                   width="90">
+                  </el-table-column>
+                  <el-table-column prop=""
+                                   label="crowdedness"
+                                   width="90">
+                  </el-table-column>
+                  -->
+                  <el-table-column label="operation" width="180">
+                    <template slot-scope="scope">
+                      <el-button size="mini"
+                                 @click="editPaths(scope.$index, scope.row)">edit</el-button>
+                      <el-button size="mini"
+                                 type="danger"
+                                 @click="deletePaths(scope.$index, scope.row)">delete</el-button>
                     </template>
                   </el-table-column>
                 </el-table>
@@ -437,7 +444,6 @@ export default {
       addDialogFormVisible: false,
       addTravelersPlansVisible: false,
       addVehiclesTimetableVisible: false,
-      addVehiclesRiskVisible: false,
       addFacilityFormVisible: false,
       addRoadFormVisible: false,
       formLabelWidth: '120px',
@@ -474,10 +480,6 @@ export default {
         arrivalTime: '',
         risk: ''
       },
-      vehiclesRiskForm: {
-        vehicle: '',
-        risk: ''
-      },
       citiesRiskForm: {
         city: '',
         risk: ''
@@ -485,8 +487,9 @@ export default {
       form: {
 
       },
+      facilitys: [],
       citiesRisk: [],
-      vehiclesRisk: [],
+      paths: [],
       vehiclesTimetable: [],
       travelersStatus: [],
       travelersPlans: [],
@@ -520,6 +523,15 @@ export default {
           console.log('error',err)
         })
     },
+    getFacilitys() {
+      this.$axios.get('/api/facilitys')// !
+        .then(res => {
+          this.facilitys = res.data.data
+        })
+        .catch(err => {
+          console.log('error', err)
+        })
+    },
     addFacility() {
       console.log(lastclick[lastclickp]);
       this.facilityForm.position = lastclick[lastclickp]
@@ -527,6 +539,34 @@ export default {
       this.$axios.post(`/api/facility?name=${this.facilityForm.name}&type=${this.facilityForm.type}&position=${this.facilityForm.position}&description=${this.facilityForm.description}`)// !
         .then(res => {
           this.citiesRiskForm = {}
+          this.getFacilitys()
+        })
+        .catch(err => {
+          console.log('error', err)
+        })
+    },
+    editFacilitys(index, row) {
+      this.$axios.put(`/api/facilitys?facility=${row.city}`)// !
+        .then(res => {
+          this.getFacilitys()
+        })
+        .catch(err => {
+          console.log('error', err)
+        })
+    },
+    deleteFacilitys(index, row) {
+      this.$axios.delete(`/api/facilitys?city=${row.city}`)// !
+        .then(res => {
+          this.getFacilitys()
+        })
+        .catch(err => {
+          console.log('error', err)
+        })
+    },
+    getPaths() {
+      this.$axios.get('/api/roads')// !
+        .then(res => {
+          this.paths = res.data.data
         })
         .catch(err => {
           console.log('error', err)
@@ -537,87 +577,25 @@ export default {
       this.$axios.post(`/api/road?type=${this.roadForm.type}&fromid=${this.roadForm.fromid}&toid=${this.roadForm.toid}&efficiency=${this.roadForm.efficiency}`)// !
         .then(res => {
           this.citiesRiskForm = {}
+          this.getPaths()
         })
         .catch(err => {
           console.log('error', err)
         })
     },
-    getCitiesRisk() {
-      this.$axios.get('/api/cities/risk')// !
+    editPaths(index, row) {
+      this.$axios.put(`/api/roads?number=${row.number}`)// !
         .then(res => {
-          this.citiesRisk = res.data.data
-          Promise.all(this.citiesRisk.map((value, index) => this.getCitiesLocation(value)))
-            .then(res => {
-              this.markers = res
-            })
-            .catch(err => {
-              console.log('error', err)
-            })
+          this.getPaths()
         })
         .catch(err => {
           console.log('error', err)
         })
     },
-    addCitiesRisk(index, row) {
-      this.$axios.post(`/api/cities/risk?city=${this.citiesRiskForm.city}&risk=${this.citiesRiskForm.risk}`)// !
+    deletePaths(index, row) {
+      this.$axios.delete(`/api/roads?number=${row.number}`)// !
         .then(res => {
-          this.citiesRiskForm = {}
-          this.getCitiesRisk()
-        })
-        .catch(err => {
-          console.log('error', err)
-        })
-    },
-    editCitiesRisk(index, row) {
-      this.$axios.put(`/api/cities/risk?city=${row.city}`)// !
-        .then(res => {
-          this.getCitiesRisk()
-        })
-        .catch(err => {
-          console.log('error', err)
-        })
-    },
-    deleteCitiesRisk(index, row) {
-      this.$axios.delete(`/api/cities/risk?city=${row.city}`)// !
-        .then(res => {
-          this.getCitiesRisk()
-        })
-        .catch(err => {
-          console.log('error', err)
-        })
-    },
-    getVehiclesRisk() {
-      this.$axios.get('/api/vehicles/risk')// !
-        .then(res => {
-          this.vehiclesRisk = res.data.data
-        })
-        .catch(err => {
-          console.log('error', err)
-        })
-    },
-    addVehiclesRisk(index, row) {
-      this.$axios.post(`/api/vehicles/risk?vehicle=${this.vehiclesRiskForm.vehicle}&risk=${this.vehiclesRiskForm.risk}`)// !
-        .then(res => {
-          this.vehiclesRiskForm = {}
-          this.getVehiclesRisk()
-        })
-        .catch(err => {
-          console.log('error', err)
-        })
-    },
-    editVehiclesRisk(index, row) {
-      this.$axios.put(`/api/vehicles/risk?vehicle=${row.vehicle}`)// !
-        .then(res => {
-          this.getVehiclesRisk()
-        })
-        .catch(err => {
-          console.log('error', err)
-        })
-    },
-    deleteVehiclesRisk(index, row) {
-      this.$axios.delete(`/api/vehicles/risk?vehicle=${row.vehicle}`)// !
-        .then(res => {
-          this.getVehiclesRisk()
+          this.getPaths()
         })
         .catch(err => {
           console.log('error', err)
@@ -708,33 +686,15 @@ export default {
     },
     getAllData() {
       this.getCurrentTime()
-      this.getCitiesRisk()
-      this.getVehiclesRisk()
-      this.getVehiclesTimetable()
-      this.getTravelersStatus()
-      this.getTravelersPlans()
+      this.getFacilitys()
+      this.getPaths()
+      //this.getVehiclesTimetable()
+      //this.getTravelersStatus()
+      //this.getTravelersPlans()
     },
     updateData() {
       this.getCurrentTime()
       this.getTravelersStatus()
-      Promise.all(this.vehiclesTimetable.map((value, index) => this.getCitiesLocation(value)))
-        .then(res => {
-          this.polylines = res.map((value, index) => {
-            value.road = [value.departurePosition, value.arrivalPosition]
-            value.key = index
-            value.borderWeight = 2
-            value.lineJoin = 'round'
-            value.showDir = true
-            value.strokeColor = '#28F'
-            value.strokeOpacity = 1
-            value.strokeWeight = 6
-            value.strokeStyle = 'solid'
-            return value
-          })
-        })
-        .catch(err => {
-          console.log('error', err)
-        })
     },
     handlePlay() {
       this.$axios.post(`/api/plan?startid=${this.navigateForm.departure}&endid=${this.navigateForm.arrival}&type=${this.navigateForm.strategy}`)// !
@@ -791,78 +751,9 @@ export default {
           console.log('error', err)
         })
     },
-    loadCitiesName() {
-      let stationNamesArray = this.station_names.replace(/@/g, '|').split('|')
-      let stationNamesChineseArray = stationNamesArray.filter((value, index) => index % 6 === 2)
-      let stationNamesPinyinArray = stationNamesArray.filter((value, index) => index % 6 === 4)
-      this.stationNamesPinyinToChinese = new Map(stationNamesPinyinArray.map((value, index) => [value, stationNamesChineseArray[index]]))
-      this.citiesNamesPingyinToPosition = new Map()
-    },
-    getCitiesLocation(item) {
-      return new Promise((resolve, reject) => {
-        if (item.city !== undefined && item.cityPosition === undefined) {
-          let tryMap = this.citiesNamesPingyinToPosition.get(item.city)
-          if (tryMap === undefined) {
-            this.$axios.get(`/amap/geocode/geo?address=${this.stationNamesPinyinToChinese.get(item.city)}&key=${this.vueAmapKey}`)// !
-              .then(res => {
-                item.cityPosition = res.data.geocodes[0].location.split(',').map(Number)
-                this.citiesNamesPingyinToPosition.set(item.city, item.cityPosition)
-                resolve(item)
-              })
-              .catch(err => {
-                reject(err)
-              })
-          } else {
-            item.cityPosition = tryMap
-          }
-        }
-        resolve(item)
-      }).then((item) => {
-        return new Promise((resolve, reject) => {
-          if (item.departure !== undefined && item.departurePosition === undefined) {
-            let tryMap = this.citiesNamesPingyinToPosition.get(item.departure)
-            if (tryMap === undefined) {
-              this.$axios.get(`/amap/geocode/geo?address=${this.stationNamesPinyinToChinese.get(item.departure)}&key=${this.vueAmapKey}`)// !
-                .then(res => {
-                  item.departurePosition = res.data.geocodes[0].location.split(',').map(Number)
-                  this.citiesNamesPingyinToPosition.set(item.departure, item.departurePosition)
-                  resolve(item)
-                })
-                .catch(err => {
-                  reject(err)
-                })
-            } else {
-              item.departurePosition = tryMap
-            }
-          }
-          resolve(item)
-        })
-      }).then((item) => {
-        return new Promise((resolve, reject) => {
-          if (item.arrival !== undefined && item.arrivalPosition === undefined) {
-            let tryMap = this.citiesNamesPingyinToPosition.get(item.arrival)
-            if (tryMap === undefined) {
-              this.$axios.get(`/amap/geocode/geo?address=${this.stationNamesPinyinToChinese.get(item.arrival)}&key=${this.vueAmapKey}`)// !
-                .then(res => {
-                  item.arrivalPosition = res.data.geocodes[0].location.split(',').map(Number)
-                  this.citiesNamesPingyinToPosition.set(item.arrival, item.arrivalPosition)
-                  resolve(item)
-                })
-                .catch(err => {
-                  reject(err)
-                })
-            } else {
-              item.arrivalPosition = tryMap
-            }
-          }
-          resolve(item)
-        })
-      })
-    },
   },
   created() {
     this.getAllData()
-    this.loadCitiesName()
     setTimeout(() => {
       try {
           

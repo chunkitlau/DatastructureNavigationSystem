@@ -144,33 +144,6 @@ const deleteVehiclesTimetable = (number) => {
   return exec(sql)
 }
 
-const getVehiclesRisk = () => {
-  const sql = `select * from vehiclesrisk;`
-  return exec(sql)
-}
-
-const addVehiclesRisk = (vehicle, risk) => {
-  const sql = `
-    insert into vehiclesrisk(vehicle, risk)
-    values('${vehicle}', ${risk});
-  `
-  return exec(sql)
-}
-
-const updateVehiclesRisk = (vehicle, risk) => {
-  const sql = `
-    update vehiclesrisk set risk=${risk} where vehicle='${vehicle}';
-  `
-  return exec(sql)
-}
-
-const deleteVehiclesRisk = (vehicle) => {
-  const sql = `
-    delete from vehiclesrisk where vehicle='${vehicle}';
-  `
-  return exec(sql)
-}
-
 const getCitiesRisk = () => {
   const sql = `select * from citiesrisk;`
   return exec(sql)
@@ -231,10 +204,6 @@ module.exports = {
   addVehiclesTimetable,
   updateVehiclesTimetable,
   deleteVehiclesTimetable,
-  getVehiclesRisk,
-  addVehiclesRisk,
-  updateVehiclesRisk,
-  deleteVehiclesRisk,
   getCitiesRisk,
   addCitiesRisk,
   updateCitiesRisk,

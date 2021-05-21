@@ -22,10 +22,6 @@ const {
   addVehiclesTimetable,
   updateVehiclesTimetable,
   deleteVehiclesTimetable,
-  getVehiclesRisk,
-  addVehiclesRisk,
-  updateVehiclesRisk,
-  deleteVehiclesRisk,
   getCitiesRisk,
   addCitiesRisk,
   updateCitiesRisk,
@@ -181,18 +177,7 @@ router.post('/plan', function (req, res, next) {
   })
 });
 
-
 module.exports = router;
-
-
-
-
-
-
-
-
-
-
 
 /* ------ TRASH ------ */
 
@@ -322,51 +307,6 @@ router.put('/vehicles/timetable', function (req, res, next) {
 router.delete('/vehicles/timetable', function (req, res, next) {
   const number = queryToNum(req.query.number)
   const result = deleteVehiclesTimetable(number)
-  return result.then(result => {
-    res.json(
-      new SuccessModel(result)
-    )
-  })
-  //!
-});
-
-router.get('/vehicles/risk', function (req, res, next) {
-  const result = getVehiclesRisk()
-  return result.then(result => {
-    res.json(
-      new SuccessModel(result)
-    )
-  })
-  //!
-});
-
-router.post('/vehicles/risk', function (req, res, next) {
-  const vehicle = req.query.vehicle || ''
-  const risk = queryToNum(req.query.risk)
-  const result = addVehiclesRisk(vehicle, risk)
-  return result.then(result => {
-    res.json(
-      new SuccessModel(result)
-    )
-  })
-  //!
-});
-
-router.put('/vehicles/risk', function (req, res, next) {
-  const vehicle = req.query.vehicle || ''
-  const risk = queryToNum(req.query.risk)
-  const result = updateVehiclesRisk(vehicle, risk)
-  return result.then(result => {
-    res.json(
-      new SuccessModel(result)
-    )
-  })
-  //!
-});
-
-router.delete('/vehicles/risk', function (req, res, next) {
-  const vehicle = req.query.vehicle || ''
-  const result = deleteVehiclesRisk(vehicle)
   return result.then(result => {
     res.json(
       new SuccessModel(result)

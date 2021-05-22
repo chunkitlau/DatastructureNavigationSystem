@@ -11,14 +11,12 @@ const {
   getRoads,
 
   queryToNum,
-  getTravelersStatus,
-  addTravelersPlans,
-  updateTravelersPlans,
-  deleteTravelersPlans,
+  
   getVehiclesTimetable,
   addVehiclesTimetable,
   updateVehiclesTimetable,
   deleteVehiclesTimetable,
+
   getCitiesRisk,
   addCitiesRisk,
   updateCitiesRisk,
@@ -43,11 +41,6 @@ router.get('/', function (req, res, next) {
     get    /road<br>
     post   /plan?startid=&endid=&type=<br>
 
-    get    /travelers/status<br>
-    get    /travelers/plans<br>
-    post   /travelers/plans<br>
-    put    /travelers/plans<br>
-    delete /travelers/plans<br>
     get    /vehicles/timetable<br>
     post   /vehicles/timetable<br>
     put    /vehicles/timetable<br>
@@ -169,55 +162,6 @@ router.post('/plan', function (req, res, next) {
 module.exports = router;
 
 /* ------ TRASH ------ */
-
-router.get('/travelers/status', function (req, res, next) {
-  const result = getTravelersStatus()
-  return result.then(result => {
-    res.json(
-      new SuccessModel(result)
-    )
-  })
-  //!
-});
-
-router.post('/travelers/plans', function (req, res, next) {
-  const id = queryToNum(req.query.id)
-  const requestTime = queryToNum(req.query.requesttime)
-  const departure = req.query.departure || ''
-  const arrival = req.query.arrival || ''
-  const result = addTravelersPlans(id, requestTime, departure, arrival)
-  return result.then(result => {
-    res.json(
-      new SuccessModel(result)
-    )
-  })
-  //!
-});
-
-router.put('/travelers/plans', function (req, res, next) {
-  const id = queryToNum(req.query.id)
-  const requestTime = queryToNum(req.query.requesttime)
-  const departure = req.query.departure || ''
-  const arrival = req.query.arrival || ''
-  const result = updateTravelersPlans(id, requestTime, departure, arrival)
-  return result.then(result => {
-    res.json(
-      new SuccessModel(result)
-    )
-  })
-  //!
-});
-
-router.delete('/travelers/plans', function (req, res, next) {
-  const id = queryToNum(req.query.id)
-  const result = deleteTravelersPlans(id)
-  return result.then(result => {
-    res.json(
-      new SuccessModel(result)
-    )
-  })
-  //!
-});
 
 router.get('/vehicles/timetable', function (req, res, next) {
   const result = getVehiclesTimetable()

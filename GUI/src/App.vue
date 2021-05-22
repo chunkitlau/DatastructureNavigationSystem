@@ -2,15 +2,11 @@
   <div id="app">
     <el-container>
       <el-main>
-        <div id="map"
-             class="map"
-             style="width: 100%; height: 660px; border: 2px solid black; ">
-        </div>
+        <div id="map" class="map" style="width: 100%; height: 660px; border: 2px solid black; "></div>
         <div id="geo-marker"></div>
         <div style="display: none;">
           <!-- Popup -->
-          <div id="popup" title="">
-          </div>
+          <div id="popup" title=""></div>
         </div>
       </el-main>
       <el-aside width="35%">
@@ -19,8 +15,8 @@
             <span>校园导览系统</span>
           </el-header>
           <el-main height="80%">
-            <span>Current time: {{ Math.floor(currentTimeS / 3600) }} hour {{ Math.floor(currentTimeS / 60) }} minute {{ currentTimeS }} second</span><br>
-            <span>Current position: {{  }} {{  }} </span>
+            <span>Current time: {{ Math.floor(currentTime / 3600) }} hour {{ Math.floor(currentTime / 60) }} minute {{ currentTime }} second</span><br>
+            <span>Current position: id = {{ currentPositionID }} name = {{ currentPositionName }} </span>
             <el-button-group>
               <el-button @click="handlePlay" type="success" icon="el-icon-video-play">play</el-button>
               <el-button @click="handlePause" type="warning" icon="el-icon-video-pause">pause</el-button>
@@ -48,9 +44,6 @@
               <el-dialog title="adding" :visible.sync="addDialogFormVisible">
                 <el-form :model="form">
                   <el-row>
-                    <el-button @click="addDialogFormVisible = false, addTravelersPlansVisible = true" type="primary" icon="el-icon-circle-plus-outline">add travelers plans</el-button>
-                  </el-row>
-                  <el-row>
                     <el-button @click="addDialogFormVisible = false, addVehiclesTimetableVisible = true" type="primary" icon="el-icon-circle-plus-outline">add vehicles timetable</el-button>
                   </el-row>
                   <el-row>
@@ -60,27 +53,6 @@
                 <div slot="footer" class="dialog-footer">
                   <el-button @click="addDialogFormVisible = false">cancel</el-button>
                   <el-button type="primary" @click="addDialogFormVisible = false">confirm</el-button>
-                </div>
-              </el-dialog>
-              <el-dialog title="adding travelers plans" :visible.sync="addTravelersPlansVisible">
-                <el-form :model="form">
-                  <el-form-item label="ID" :label-width="formLabelWidth">
-                    <el-input v-model="travelersPlansForm.id" autocomplete="off"></el-input>
-                  </el-form-item>
-                  <el-form-item label="request time" :label-width="formLabelWidth">
-                    <el-input v-model="travelersPlansForm.requestTime" autocomplete="off"></el-input>
-                  </el-form-item>
-                  <el-form-item label="departure" :label-width="formLabelWidth">
-                    <el-input v-model="travelersPlansForm.departure" autocomplete="off"></el-input>
-                  </el-form-item>
-                  <el-form-item label="arrival" :label-width="formLabelWidth">
-                    <el-input v-model="travelersPlansForm.arrival" autocomplete="off"></el-input>
-                  </el-form-item>
-                </el-form>
-                <div slot="footer" class="dialog-footer">
-                  <el-button @click="addTravelersPlansVisible = false, addDialogFormVisible = true">back</el-button>
-                  <el-button @click="addTravelersPlansVisible = false">cancel</el-button>
-                  <el-button type="primary" @click="addTravelersPlansVisible = false, addTravelersPlans()">confirm</el-button>
                 </div>
               </el-dialog>
               <el-dialog title="adding vehicles timetable" :visible.sync="addVehiclesTimetableVisible">
@@ -154,163 +126,79 @@
               </el-dialog>
             </el-button-group>
             <el-tabs type="border-card">
+              <el-tab-pane label="nearby">
+                <el-table :data="routeData.path" height="500" stripe style="width: 100%">
+                  <el-table-column prop="id" label="id" width="60"></el-table-column>
+                  <el-table-column prop="fromid" label="fromid" width="90"></el-table-column>
+                  <el-table-column prop="toid" label="toid" width="60"></el-table-column>
+                  <el-table-column prop="type" label="type" width="60"></el-table-column>
+                  <el-table-column prop="efficiency" label="efficiency" width="90"></el-table-column>
+                </el-table>
+              </el-tab-pane>
               <el-tab-pane label="travel plan">
-                <el-table :data="routeData.path"
-                          height="500"
-                          stripe
-                          style="width: 100%">
-                  <el-table-column prop="id"
-                                   label="id"
-                                   width="60">
-                  </el-table-column>
-                  <el-table-column prop="fromid"
-                                   label="fromid"
-                                   width="60">
-                  </el-table-column>
-                  <el-table-column prop="toid"
-                                   label="toid"
-                                   width="120">
-                  </el-table-column>
-                  <el-table-column prop="type"
-                                   label="type"
-                                   width="60">
-                  </el-table-column>
-                  <el-table-column prop="efficiency"
-                                   label="efficiency"
-                                   width="120">
-                  </el-table-column>
+                <el-table :data="routeData.path" height="500" stripe style="width: 100%">
+                  <el-table-column prop="id" label="id" width="60"></el-table-column>
+                  <el-table-column prop="fromid" label="fromid" width="90"></el-table-column>
+                  <el-table-column prop="toid" label="toid" width="60"></el-table-column>
+                  <el-table-column prop="type" label="type" width="60"></el-table-column>
+                  <el-table-column prop="efficiency" label="efficiency" width="90"></el-table-column>
                 </el-table>
               </el-tab-pane>
               <el-tab-pane label="facilitys">
-                <el-table :data="facilitys"
-                          height="500"
-                          stripe
-                          style="width: 100%">
-                  <el-table-column prop="id"
-                                   label="id"
-                                   width="60">
-                  </el-table-column>
-                  <el-table-column prop="name"
-                                   label="name"
-                                   width="60">
-                  </el-table-column>
-                  <el-table-column prop="type"
-                                   label="type"
-                                   width="60">
-                  </el-table-column>
-                  <el-table-column prop="location"
-                                   label="location"
-                                   width="120">
-                  </el-table-column>
-                  <el-table-column prop="description"
-                                   label="description"
-                                   width="120">
-                  </el-table-column>
+                <el-table :data="facilitys" height="500" stripe style="width: 100%">
+                  <el-table-column prop="id" label="id" width="60"></el-table-column>
+                  <el-table-column prop="name" label="name" width="60"></el-table-column>
+                  <el-table-column prop="type" label="type" width="60"></el-table-column>
+                  <el-table-column prop="location" label="location" width="120"></el-table-column>
+                  <el-table-column prop="description" label="description" width="120"></el-table-column>
                   <el-table-column label="operation" width="180">
                     <template slot-scope="scope">
-                      <el-button size="mini"
-                                 @click="editFacilitys(scope.$index, scope.row)">edit</el-button>
-                      <el-button size="mini"
-                                 type="danger"
-                                 @click="deleteFacilitys(scope.$index, scope.row)">delete</el-button>
+                      <el-button size="mini" @click="editFacilitys(scope.$index, scope.row)">edit</el-button>
+                      <el-button size="mini" type="danger" @click="deleteFacilitys(scope.$index, scope.row)">delete</el-button>
                     </template>
                   </el-table-column>
                 </el-table>
               </el-tab-pane>
               <el-tab-pane label="paths">
-                <el-table :data="paths"
-                          height="500"
-                          stripe
-                          style="width: 100%">
-                  <el-table-column prop="id"
-                                   label="id"
-                                   width="60">
-                  </el-table-column>
-                  <el-table-column prop="type"
-                                   label="type"
-                                   width="60">
-                  </el-table-column>
-                  <el-table-column prop="fromid"
-                                   label="fromid"
-                                   width="90">
-                  </el-table-column>
-                  <el-table-column prop="toid"
-                                   label="toid"
-                                   width="90">
-                  </el-table-column>
-                  <el-table-column prop="efficiency"
-                                   label="efficiency"
-                                   width="90">
-                  </el-table-column>
+                <el-table :data="paths" height="500" stripe style="width: 100%">
+                  <el-table-column prop="id" label="id" width="60"></el-table-column>
+                  <el-table-column prop="type" label="type" width="60"></el-table-column>
+                  <el-table-column prop="fromid" label="fromid" width="90"></el-table-column>
+                  <el-table-column prop="toid" label="toid" width="90"></el-table-column>
+                  <el-table-column prop="efficiency" label="efficiency" width="90"></el-table-column>
                   <!--
-                  <el-table-column prop=""
-                                   label="length"
-                                   width="90">
-                  </el-table-column>
-                  <el-table-column prop=""
-                                   label="transit time"
-                                   width="90">
-                  </el-table-column>
-                  <el-table-column prop=""
-                                   label="crowdedness"
-                                   width="90">
-                  </el-table-column>
+                  <el-table-column prop="" label="length" width="90"></el-table-column>
+                  <el-table-column prop="" label="transit time" width="90"></el-table-column>
+                  <el-table-column prop="" label="crowdedness" width="90"></el-table-column>
                   -->
                   <el-table-column label="operation" width="180">
                     <template slot-scope="scope">
-                      <el-button size="mini"
-                                 @click="editPaths(scope.$index, scope.row)">edit</el-button>
-                      <el-button size="mini"
-                                 type="danger"
-                                 @click="deletePaths(scope.$index, scope.row)">delete</el-button>
+                      <el-button size="mini" @click="editPaths(scope.$index, scope.row)">edit</el-button>
+                      <el-button size="mini" type="danger" @click="deletePaths(scope.$index, scope.row)">delete</el-button>
                     </template>
                   </el-table-column>
                 </el-table>
               </el-tab-pane>
               <el-tab-pane label="timetable">
-                <el-table :data="vehiclesTimetable"
-                          height="500"
-                          stripe
-                          style="width: 100%">
-                  <el-table-column prop="number"
-                                   label="number"
-                                   width="90">
-                  </el-table-column>
-                  <el-table-column prop="type"
-                                   label="type"
-                                   width="90">
-                  </el-table-column>
-                  <el-table-column prop="departure"
-                                   label="departure"
-                                   width="120">
-                  </el-table-column>
-                  <el-table-column prop="departureTime"
-                                   label="departure time"
-                                   width="150">
-                  </el-table-column>
-                  <el-table-column prop="arrival"
-                                   label="arrival"
-                                   width="120">
-                  </el-table-column>
-                  <el-table-column prop="arrivalTime"
-                                   label="arrival time"
-                                   width="120">
-                  </el-table-column>
+                <el-table :data="vehiclesTimetable" height="500" stripe style="width: 100%">
+                  <el-table-column prop="number" label="number" width="90"></el-table-column>
+                  <el-table-column prop="type" label="type" width="90"></el-table-column>
+                  <el-table-column prop="departure" label="departure" width="120"></el-table-column>
+                  <el-table-column prop="departureTime" label="departure time" width="150"></el-table-column>
+                  <el-table-column prop="arrival" label="arrival" width="120"></el-table-column>
+                  <el-table-column prop="arrivalTime" label="arrival time" width="120"></el-table-column>
                   <el-table-column label="operation" width="180">
                     <template slot-scope="scope">
-                      <el-button size="mini"
-                                 @click="editVehiclesTimetable(scope.$index, scope.row)">edit</el-button>
-                      <el-button size="mini"
-                                 type="danger"
-                                 @click="deleteVehiclesTimetable(scope.$index, scope.row)">delete</el-button>
+                      <el-button size="mini" @click="editVehiclesTimetable(scope.$index, scope.row)">edit</el-button>
+                      <el-button size="mini" type="danger" @click="deleteVehiclesTimetable(scope.$index, scope.row)">delete</el-button>
                     </template>
                   </el-table-column>
                 </el-table>
               </el-tab-pane>
             </el-tabs>
             <!--
-      <router-view />
-  -->
+            <router-view />
+            -->
           </el-main>
           <el-footer height="10%">
             Copyright © 2021 - present Chunkit Lau; all rights reserved
@@ -431,10 +319,7 @@ var routeLayer=new ol.layer.Vector({
   })
 });
 
-var isPlay = false;
-var posisiontNow = 0;
-var currentTime = 0;
-var isInitAnimation = false;
+var isPlay = false, isInitAnimation = false;
 var deltaTtime = 500;
 var polyline = null;
 
@@ -444,7 +329,8 @@ export default {
     return {
       interval: null,
       map: null,
-      currentTimeS: 0,
+      currentTime: 0,
+      posisiontNow: 0,
       setNavigateFormVisible: false,
       addDialogFormVisible: false,
       addTravelersPlansVisible: false,
@@ -452,57 +338,44 @@ export default {
       addFacilityFormVisible: false,
       addRoadFormVisible: false,
       formLabelWidth: '120px',
-      navigateForm: {
-        departure: '',
-        arrival: '',
-        strategy: ''
-      },
-      facilityForm: {
-        name: '',
-        type: '',
-        description: '',
-        position: ''
-      },
-      roadForm: {
-        type: '',
-        departure: '',
-        arrival: '',
-        efficiency: ''
-      },
-      travelersPlansForm: {
-        id: '',
-        requestTime: '',
-        departure: '',
-        arrival: '',
-        plan: ''
-      },
-      vehiclesTimetableForm: {
-        number: '',
-        type: '',
-        departure: '',
-        departureTime: '',
-        arrival: '',
-        arrivalTime: '',
-        risk: ''
-      },
-      citiesRiskForm: {
-        city: '',
-        risk: ''
-      },
-      form: {
-
-      },
+      navigateForm: { departure: '', arrival: '', strategy: '' },
+      facilityForm: { name: '', type: '', description: '', position: '' },
+      roadForm: { type: '', departure: '', arrival: '', efficiency: '' },
+      travelersPlansForm: { id: '', requestTime: '', departure: '', arrival: '', plan: '' },
+      vehiclesTimetableForm: { number: '', type: '', departure: '', departureTime: '', arrival: '', arrivalTime: '', risk: '' },
+      citiesRiskForm: { city: '', risk: '' },
+      form: {},
       facilitys: [],
       citiesRisk: [],
       paths: [],
-      routeData: {
-        path: null
-      },
+      routeData: { path: [{fromid: 0}] },
       vehiclesTimetable: [],
       travelersStatus: [],
       travelersPlans: [],
       log: [],
     }
+  },
+  computed: {
+    currentPosition: function () {
+      
+      return this.facilitys.find(element => element.id == this.routeData.path[this.posisiontNow].fromid);
+    },
+    currentPositionID: function () {
+      try {
+        return this.currentPosition.id;
+      }
+      catch (err){
+        return null;
+      }
+    },
+    currentPositionName: function () {
+      try {
+        return this.currentPosition.name;
+      }
+      catch (err){
+        return null;
+      }
+    },
   },
   methods: {
     setNavigate() {
@@ -632,61 +505,12 @@ export default {
           console.log('error', err)
         })
     },
-    getTravelersStatus() {
-      this.$axios.get('/api/travelers/status')// !
-        .then(res => {
-          this.travelersStatus = res.data.data
-        })
-        .catch(err => {
-          console.log('error', err)
-        })
-    },
-    getTravelersPlans() {
-      this.$axios.get('/api/travelers/plans')// !
-        .then(res => {
-          this.travelersPlans = res.data.data
-        })
-        .catch(err => {
-          console.log('error', err)
-        })
-    },
-    addTravelersPlans() {
-      this.$axios.post(`/api/travelers/plans?id=${this.travelersPlansForm.id}&requesttime=${this.travelersPlansForm.requestTime}&departure=${this.travelersPlansForm.departure}&arrival=${this.travelersPlansForm.arrival}`)// !
-        .then(res => {
-          this.travelersPlansForm = {}
-          this.getTravelersPlans()
-        })
-        .catch(err => {
-          console.log('error', err)
-        })
-    },
-    editTravelersPlans(index, row) {
-      this.$axios.put(`/api/travelers/plans?id=${row.id}`)// !
-        .then(res => {
-          this.getTravelersPlans()
-        })
-        .catch(err => {
-          console.log('error', err)
-        })
-    },
-    deleteTravelersPlans(index, row) {
-      this.$axios.delete(`/api/travelers/plans?id=${row.id}`)// !
-        .then(res => {
-          this.getTravelersPlans()
-        })
-        .catch(err => {
-          console.log('error', err)
-        })
-    },
     getAllData() {
       this.getFacilitys()
       this.getPaths()
       //this.getVehiclesTimetable()
-      //this.getTravelersStatus()
-      //this.getTravelersPlans()
     },
     updateData() {
-      this.getTravelersStatus()
     },
     initAnimation() {
       this.$axios.post(`/api/plan?startid=${this.navigateForm.departure}&endid=${this.navigateForm.arrival}&type=${this.navigateForm.strategy}`)// !
@@ -711,12 +535,11 @@ export default {
           //fire the animation
           var self = this;
           var animation = function () {
-            if (posisiontNow < polyline.length && isPlay) {
-              lineString.setCoordinates(polyline.slice(0,posisiontNow+1));
-              marker.setPosition(polyline[posisiontNow]);
-              posisiontNow++;
-              currentTime += deltaTtime / 1000.0 * 6; 
-              self.currentTimeS = currentTime;
+            if (self.posisiontNow < polyline.length && isPlay) {
+              self.posisiontNow++;
+              lineString.setCoordinates(polyline.slice(0,self.posisiontNow+1));
+              marker.setPosition(polyline[self.posisiontNow]);
+              self.currentTime += deltaTtime / 1000.0 * 6;
               /* currentTime is 6 times of deltaTtime. 
                * deltaTtime measures by ms, currentTime measures by second.
                * real deltaTtime goes 10s correspond to simulation system currentTime 1min.
@@ -744,9 +567,10 @@ export default {
     },
     handleReset() {
       isPlay = false;
-      posisiontNow = 0;
-      lineString.setCoordinates(polyline.slice(0,posisiontNow+1));
-      marker.setPosition(polyline[posisiontNow]);
+      this.posisiontNow = 0;
+      this.currentTime = 0;
+      lineString.setCoordinates(polyline.slice(0,this.posisiontNow+1));
+      marker.setPosition(polyline[this.posisiontNow]);
     },
   },
   created() {
@@ -797,7 +621,7 @@ export default {
         placement: 'top',
         animation: false,
         html: true,
-        content: `<p>The location you clicked was:</p><code>` + hdms + `</code>`,
+        content: `<p>The location you clicked was: ` + hdms + `</p>`,
       });
       $(element).popover('show');
     });

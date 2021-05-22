@@ -60,33 +60,6 @@ const queryToNum = (query) => {
   return result
 }
 
-const getTravelersStatus = () => {
-  const sql = `select * from travelersstatus;`
-  return exec(sql)
-}
-
-const addTravelersPlans = (id, requestTime, departure, arrival) => {
-  const sql = `
-    insert into travelersplans(id, requesttime, departure, arrival, plan)
-    values(${id}, ${requestTime}, '${departure}', '${arrival}', '[]');
-  `
-  return exec(sql)
-}
-
-const updateTravelersPlans = (id, requestTime, departure, arrival) => {
-  const sql = `
-    update travelersplans set requesttime=${requestTime}, departure='${departure}', arrival='${arrival}' where id=${id};
-  `
-  return exec(sql)
-}
-
-const deleteTravelersPlans = (id) => {
-  const sql = `
-    delete from travelersplans where id=${id};
-  `
-  return exec(sql)
-}
-
 const getVehiclesTimetable = () => {
   const sql = `select * from vehiclestimetable;`
   return exec(sql)
@@ -162,14 +135,12 @@ module.exports = {
   getRoads,
 
   queryToNum,
-  getTravelersStatus,
-  addTravelersPlans,
-  updateTravelersPlans,
-  deleteTravelersPlans,
+
   getVehiclesTimetable,
   addVehiclesTimetable,
   updateVehiclesTimetable,
   deleteVehiclesTimetable,
+
   getCitiesRisk,
   addCitiesRisk,
   updateCitiesRisk,

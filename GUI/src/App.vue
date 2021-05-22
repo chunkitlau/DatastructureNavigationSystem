@@ -357,8 +357,12 @@ export default {
   },
   computed: {
     currentPosition: function () {
-      
-      return this.facilitys.find(element => element.id == this.routeData.path[this.posisiontNow].fromid);
+      try {
+        return this.facilitys.find(element => element.id == this.routeData.path[this.posisiontNow].fromid);
+      }
+      catch (err){
+        return null;
+      }
     },
     currentPositionID: function () {
       try {
@@ -382,6 +386,13 @@ export default {
       this.$axios.post(`/api/plan?startid=${this.navigateForm.departure}&endid=${this.navigateForm.arrival}&type=${this.navigateForm.strategy}`)
         .then(res => {
           console.log(res)
+          if (this.posisiontNow) {
+            this.posisiontNow = 0;
+          }
+          else {
+            this.posisiontNow = 1;
+            this.posisiontNow = 0;
+          }
           this.initAnimation();
           isInitAnimation = true;
           isPlay = false;
@@ -532,34 +543,18 @@ export default {
           routeFeature.setStyle(styles['route']);
           lineStringFeature.setGeometry(lineString);
           lineStringFeature.setStyle(styles['route1']);
-          //fire the animation
-          var self = this;
-          var animation = function () {
-            if (self.posisiontNow < polyline.length && isPlay) {
-              self.posisiontNow++;
-              lineString.setCoordinates(polyline.slice(0,self.posisiontNow+1));
-              marker.setPosition(polyline[self.posisiontNow]);
-              self.currentTime += deltaTtime / 1000.0 * 6;
-              /* currentTime is 6 times of deltaTtime. 
-               * deltaTtime measures by ms, currentTime measures by second.
-               * real deltaTtime goes 10s correspond to simulation system currentTime 1min.
-               */
-            }
-          };
-          map.once('postcompose', function (event) {
-            console.info('postcompose');
-            this.interval = setInterval(animation, deltaTtime);
-          });
         })
         .catch(err => {
           console.log('error', err)
         })
     },
     handlePlay() {
+      /*
       if (!isInitAnimation) {
         this.initAnimation();
         isInitAnimation = tue;
       }
+      */
       isPlay = true;
     },
     handlePause() {
@@ -720,6 +715,25 @@ export default {
       stopEvent: false
     });
     map.addOverlay(marker);
+
+    //fire the animation
+    var self = this;
+    var animation = function () {
+      if (self.posisiontNow < polyline.length && isPlay) {
+        self.posisiontNow++;
+        lineString.setCoordinates(polyline.slice(0,self.posisiontNow+1));
+        marker.setPosition(polyline[self.posisiontNow]);
+        self.currentTime += deltaTtime / 1000.0 * 6;
+        /* currentTime is 6 times of deltaTtime. 
+          * deltaTtime measures by ms, currentTime measures by second.
+          * real deltaTtime goes 10s correspond to simulation system currentTime 1min.
+          */
+      }
+    };
+    map.once('postcompose', function (event) {
+      console.info('postcompose');
+      this.interval = setInterval(animation, deltaTtime);
+    });
   },
   updated() {
   },

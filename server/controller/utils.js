@@ -1,7 +1,5 @@
 const xss = require('xss')
 const { exec } = require('../database/mysql')
-var currentTime = 0
-var currentStatus = 1
 
 const getFacility = (id) => {
   const sql = `select * from dottable where id=${id};`
@@ -52,10 +50,6 @@ const createRoad = (fromid, toid, type, efficiency) => {
   return exec(sql)
 }
 
-
-
-
-
 /* ------ TRASH ------ */
 
 const queryToNum = (query) => {
@@ -64,30 +58,6 @@ const queryToNum = (query) => {
     result = NaN
   }
   return result
-}
-
-const timeCounter = setInterval(function () {
-  currentTime += currentStatus === 0
-  //console.log(currentTime)
-}, 10000)
-
-const getCurrentTime = () => {
-  return { currentTime: currentTime }
-}
-
-const getCurrentStatus = () => {
-  return { currentStatus: currentStatus }
-}
-
-const updateCurrentStatus = (status) => {
-  if (status === 2) {
-    currentTime = 0
-    currentStatus = 0
-  }
-  else {
-    currentStatus = status
-  }
-  return { currentStatus: currentStatus }
 }
 
 const getTravelersStatus = () => {
@@ -191,11 +161,7 @@ module.exports = {
   getRoad,
   getRoads,
 
-
   queryToNum,
-  getCurrentTime,
-  getCurrentStatus,
-  updateCurrentStatus,
   getTravelersStatus,
   addTravelersPlans,
   updateTravelersPlans,

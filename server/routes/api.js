@@ -11,9 +11,6 @@ const {
   getRoads,
 
   queryToNum,
-  getCurrentTime,
-  getCurrentStatus,
-  updateCurrentStatus,
   getTravelersStatus,
   addTravelersPlans,
   updateTravelersPlans,
@@ -46,9 +43,6 @@ router.get('/', function (req, res, next) {
     get    /road<br>
     post   /plan?startid=&endid=&type=<br>
 
-    get    /current/time<br>
-    get    /current/status<br>
-    put    /current/status<br>
     get    /travelers/status<br>
     get    /travelers/plans<br>
     post   /travelers/plans<br>
@@ -58,16 +52,11 @@ router.get('/', function (req, res, next) {
     post   /vehicles/timetable<br>
     put    /vehicles/timetable<br>
     delete /vehicles/timetable<br>
-    get    /vehicles/risk<br>
-    post   /vehicles/risk<br>
-    put    /vehicles/risk<br>
-    delete /vehicles/risk<br>
     get    /cities/risk<br>
     post   /cities/risk<br>
     put    /cities/risk<br>
     delete /cities/risk<br>
     get    /log<br>
-    
   `);
 });
 
@@ -180,36 +169,6 @@ router.post('/plan', function (req, res, next) {
 module.exports = router;
 
 /* ------ TRASH ------ */
-
-router.get('/current/time', function (req, res, next) {
-  const result = getCurrentTime()
-  res.json(
-    new SuccessModel(result)
-  )
-});
-
-router.get('/current/status', function (req, res, next) {
-  const result = getCurrentStatus()
-  res.json(
-    new SuccessModel(result)
-  )
-});
-
-router.put('/current/status', function (req, res, next) {
-  const status = queryToNum(req.query.operation)
-  if (isNaN(status)) {
-    const result = getCurrentStatus(status)
-    res.json(
-      new ErrorModel(result)
-    )
-  }
-  else {
-    const result = updateCurrentStatus(status)
-    res.json(
-      new SuccessModel(result)
-    )
-  }
-});
 
 router.get('/travelers/status', function (req, res, next) {
   const result = getTravelersStatus()

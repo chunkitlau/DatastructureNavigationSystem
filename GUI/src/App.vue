@@ -19,12 +19,12 @@
             <span>校园导览系统</span>
           </el-header>
           <el-main height="80%">
-            <span>Current time: {{ currentTime.day }} day {{ currentTime.hour }} hour</span><br>
+            <span>Current time: {{ Math.floor(currentTimeS / 3600) }} hour {{ Math.floor(currentTimeS / 60) }} minute {{ currentTimeS }} second</span><br>
             <span>Current position: {{  }} {{  }} </span>
             <el-button-group>
               <el-button @click="handlePlay" type="success" icon="el-icon-video-play">play</el-button>
               <el-button @click="handlePause" type="warning" icon="el-icon-video-pause">pause</el-button>
-              <el-button @click="handleRestart" type="danger" icon="el-icon-refresh-left">reset</el-button>
+              <el-button @click="handleReset" type="danger" icon="el-icon-refresh-left">reset</el-button>
               <el-button @click="setNavigateFormVisible = true" type="primary" icon="el-icon-s-promotion">navigate</el-button>
               <el-button @click="addFacilityFormVisible = true" type="primary" icon="el-icon-circle-plus-outline">add facility</el-button>
               <el-button @click="addRoadFormVisible = true" type="primary" icon="el-icon-circle-plus-outline">add road</el-button>
@@ -155,30 +155,29 @@
             </el-button-group>
             <el-tabs type="border-card">
               <el-tab-pane label="travel plan">
-                <el-table :data="citiesRisk"
+                <el-table :data="routeData.path"
                           height="500"
                           stripe
                           style="width: 100%">
-                  <el-table-column prop="city"
-                                   label="time"
+                  <el-table-column prop="id"
+                                   label="id"
                                    width="60">
                   </el-table-column>
-                  <el-table-column prop="city"
-                                   label="name"
+                  <el-table-column prop="fromid"
+                                   label="fromid"
                                    width="60">
                   </el-table-column>
-                  <el-table-column prop="city"
-                                   label="position"
+                  <el-table-column prop="toid"
+                                   label="toid"
                                    width="120">
                   </el-table-column>
-                  <el-table-column label="operation" width="180">
-                    <template slot-scope="scope">
-                      <el-button size="mini"
-                                 @click="editCitiesRisk(scope.$index, scope.row)">edit</el-button>
-                      <el-button size="mini"
-                                 type="danger"
-                                 @click="deleteCitiesRisk(scope.$index, scope.row)">delete</el-button>
-                    </template>
+                  <el-table-column prop="type"
+                                   label="type"
+                                   width="60">
+                  </el-table-column>
+                  <el-table-column prop="efficiency"
+                                   label="efficiency"
+                                   width="120">
                   </el-table-column>
                 </el-table>
               </el-tab-pane>
@@ -417,7 +416,7 @@ var sourceFeatures = new ol.source.Vector();
 var layerFeatures = new ol.layer.Vector({ source: sourceFeatures });
 
 // routeData存放导航路径信息
-var routeData,route;
+var route;
 
 // 导航的一些features
 var routeFeature=new ol.Feature();
@@ -432,14 +431,20 @@ var routeLayer=new ol.layer.Vector({
   })
 });
 
+var isPlay = false;
+var posisiontNow = 0;
+var currentTime = 0;
+var isInitAnimation = false;
+var deltaTtime = 500;
+var polyline = null;
+
 export default {
   name: 'App',
   data() {
     return {
       interval: null,
       map: null,
-      timer: 0,
-      currentTime: 0,
+      currentTimeS: 0,
       setNavigateFormVisible: false,
       addDialogFormVisible: false,
       addTravelersPlansVisible: false,
@@ -490,34 +495,23 @@ export default {
       facilitys: [],
       citiesRisk: [],
       paths: [],
+      routeData: {
+        path: null
+      },
       vehiclesTimetable: [],
       travelersStatus: [],
       travelersPlans: [],
       log: [],
-      markers: [],
-      polylines: [],
-      lineArr: [],
-      passedPolyline: []
     }
   },
   methods: {
-    getCurrentTime() {
-      this.$axios.get('/api/current/time')// !
-        .then(res => {
-          // console.log(res.data.data.currentTime)
-          this.currentTime = {
-            day: parseInt(res.data.data.currentTime / 24),
-            hour: res.data.data.currentTime % 24
-          }
-        })
-        .catch(err => {
-          console.log('error', err)
-        })
-    },
     setNavigate() {
       this.$axios.post(`/api/plan?startid=${this.navigateForm.departure}&endid=${this.navigateForm.arrival}&type=${this.navigateForm.strategy}`)
         .then(res => {
           console.log(res)
+          this.initAnimation();
+          isInitAnimation = true;
+          isPlay = false;
         })
         .catch(err => {
           console.log('error',err)
@@ -685,7 +679,6 @@ export default {
         })
     },
     getAllData() {
-      this.getCurrentTime()
       this.getFacilitys()
       this.getPaths()
       //this.getVehiclesTimetable()
@@ -693,17 +686,17 @@ export default {
       //this.getTravelersPlans()
     },
     updateData() {
-      this.getCurrentTime()
       this.getTravelersStatus()
     },
-    handlePlay() {
+    initAnimation() {
       this.$axios.post(`/api/plan?startid=${this.navigateForm.departure}&endid=${this.navigateForm.arrival}&type=${this.navigateForm.strategy}`)// !
         .then(res => {
           lineString.setCoordinates([]);
-          routeData=res.data;
-          var polyline=new Array(trans(dotTable.find(o=>o.id===routeData.data.path[0].fromid).location));
-          for(var i in routeData.data.path){
-            polyline.push(trans(dotTable.find(o=>o.id===routeData.data.path[i].toid).location));
+          this.routeData=res.data.data;
+          console.log(this.routeData)
+          polyline=new Array(trans(dotTable.find(o=>o.id===this.routeData.path[0].fromid).location));
+          for(var i in this.routeData.path){
+            polyline.push(trans(dotTable.find(o=>o.id===this.routeData.path[i].toid).location));
           }
           startMarker.setGeometry(new ol.geom.Point(polyline[0]));
           startMarker.setStyle(styles['icon']);
@@ -715,41 +708,45 @@ export default {
           routeFeature.setStyle(styles['route']);
           lineStringFeature.setGeometry(lineString);
           lineStringFeature.setStyle(styles['route1']);
-          var i = 0;
           //fire the animation
-          map.once('postcompose', function (event) {
-            console.info('postcompose');
-            this.interval = setInterval(animation, 500);
-          });
+          var self = this;
           var animation = function () {
-            if (i < polyline.length) {
-              lineString.setCoordinates(polyline.slice(0,i+1));
-              marker.setPosition(polyline[i]);
-              i++;
+            if (posisiontNow < polyline.length && isPlay) {
+              lineString.setCoordinates(polyline.slice(0,posisiontNow+1));
+              marker.setPosition(polyline[posisiontNow]);
+              posisiontNow++;
+              currentTime += deltaTtime / 1000.0 * 6; 
+              self.currentTimeS = currentTime;
+              /* currentTime is 6 times of deltaTtime. 
+               * deltaTtime measures by ms, currentTime measures by second.
+               * real deltaTtime goes 10s correspond to simulation system currentTime 1min.
+               */
             }
           };
+          map.once('postcompose', function (event) {
+            console.info('postcompose');
+            this.interval = setInterval(animation, deltaTtime);
+          });
         })
         .catch(err => {
           console.log('error', err)
         })
+    },
+    handlePlay() {
+      if (!isInitAnimation) {
+        this.initAnimation();
+        isInitAnimation = tue;
+      }
+      isPlay = true;
     },
     handlePause() {
-      this.$axios.put('/api/current/status?operation=1')// !
-        .then(res => {
-          // console.log(res.data)
-        })
-        .catch(err => {
-          console.log('error', err)
-        })
+      isPlay = false;
     },
-    handleRestart() {
-      this.$axios.put('/api/current/status?operation=2')// !
-        .then(res => {
-          // console.log(res.data)
-        })
-        .catch(err => {
-          console.log('error', err)
-        })
+    handleReset() {
+      isPlay = false;
+      posisiontNow = 0;
+      lineString.setCoordinates(polyline.slice(0,posisiontNow+1));
+      marker.setPosition(polyline[posisiontNow]);
     },
   },
   created() {
@@ -899,13 +896,10 @@ export default {
       stopEvent: false
     });
     map.addOverlay(marker);
-      
   },
   updated() {
-
   },
   destroyed() {
-    // clearInterval(this.timer)
   }
 }
 </script>

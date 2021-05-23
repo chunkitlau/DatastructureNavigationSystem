@@ -417,7 +417,8 @@ export default {
       this.$axios.post(`/api/facility?name=${this.facilityForm.name}&type=${this.facilityForm.type}&position=${this.facilityForm.position}&description=${this.facilityForm.description}`)// !
         .then(res => {
           this.citiesRiskForm = {}
-          this.getFacilitys()
+          this.getFacilitys();
+          this.displayData();
         })
         .catch(err => {
           console.log('error', err)
@@ -455,7 +456,8 @@ export default {
       this.$axios.post(`/api/road?type=${this.roadForm.type}&fromid=${this.roadForm.fromid}&toid=${this.roadForm.toid}&efficiency=${this.roadForm.efficiency}`)// !
         .then(res => {
           this.citiesRiskForm = {}
-          this.getPaths()
+          this.getPaths();
+          this.displayData();
         })
         .catch(err => {
           console.log('error', err)
@@ -520,6 +522,74 @@ export default {
       this.getFacilitys()
       this.getPaths()
       //this.getVehiclesTimetable()
+    },
+    displayData() {
+      sourceFeatures.clear();
+      this.$axios.get('/api/facilitys')
+      .then(res => {
+        dotTable=res.data.data;
+        for(var i in dotTable){
+          var feature=new ol.Feature({
+            geometry: new ol.geom.Point(transform(Object.values(dotTable[i].location),'EPSG:4326','EPSG:3857')),
+            name: dotTable[i].id
+          });
+          feature.setStyle(new ol.style.Style({
+            image: new ol.style.Circle({
+              radius: 6,
+              fill: new ol.style.Fill({ color: 'rgba(255,255,255,1)' }),
+              stroke: new ol.style.Stroke({ color: 'rgba(0,0,0,1)' })
+            }),
+            text: new ol.style.Text({
+              text: dotTable[i].id,
+              fill: new ol.style.Fill({color: '#000'}),
+              textAlign: 'left',
+              offsetX: 10
+            })
+          }));
+          sourceFeatures.addFeatures([feature]);
+        }
+      }).then(res => {
+        // 将数据库中的所有边显示在地图上
+        this.$axios.get('/api/roads')
+          .then(res => {
+            var edgeColor=['#333399','#ff9900','#009900','#cc0000'];
+            edgeTable=res.data.data;
+            for(var i in edgeTable){
+              var fromLoc=dotTable.find(o => o.id === edgeTable[i].fromid).location;
+              var toLoc=dotTable.find(o => o.id === edgeTable[i].toid).location;
+              var points=new Array(
+                trans(fromLoc),trans(toLoc)
+              );
+              var line=new ol.geom.LineString(points);
+              var layerEdge = new ol.layer.Vector({
+                source: new ol.source.Vector({
+                  features: [
+                    new ol.Feature({ geometry: line })
+                  ]
+                }),
+                style: [
+                  new ol.style.Style({
+                    stroke: new ol.style.Stroke({
+                      width: 3,
+                      color: edgeColor[edgeTable[i].type],
+                      lineDash: [.1, 5]
+                    }),
+                    text: new ol.style.Text({
+                      font: '16px sans-serif',
+                      text: edgeTable[i].id,
+                      fill: new ol.style.Fill({color: '#000'})
+                    })
+                  })
+                ]
+              });
+              map.addLayer(layerEdge);
+            }
+          }).catch(err => {
+            console.log(err);
+          })
+      }).catch(err => {
+        console.log(err);
+      });
     },
     updateData() {
     },
@@ -620,93 +690,9 @@ export default {
       });
       $(element).popover('show');
     });
-    
-    // 下面两个函数用到的一些样式
-    var fill = new ol.style.Fill({ color: 'rgba(255,255,255,1)' }),
-      stroke = new ol.style.Stroke({ color: 'rgba(0,0,0,1)' }),
-      style1 = [
-        new ol.style.Style({
-          image: new ol.style.Icon(({
-            scale: .7, opacity: 1,
-            rotateWithView: false, anchor: [0.5, 1],
-            anchorXUnits: 'fraction', anchorYUnits: 'fraction',
-            src: '//raw.githubusercontent.com/jonataswalker/map-utils/master/images/marker.png'
-          })),
-          zIndex: 5
-        }),
-        new ol.style.Style({
-          image: new ol.style.Circle({
-            radius: 6, fill: fill, stroke: stroke
-          }),
-          zIndex: 4
-        })
-      ]
 
     // 将数据库中的所有点显示在地图上
-    this.$axios.get('/api/facilitys')
-      .then(res => {
-        dotTable=res.data.data;
-        // console.log(dotTable);
-        for(var i in dotTable){
-          var feature=new ol.Feature({
-            geometry: new ol.geom.Point(transform(Object.values(dotTable[i].location),'EPSG:4326','EPSG:3857')),
-            name: dotTable[i].id
-          });
-          feature.setStyle(new ol.style.Style({
-            image: new ol.style.Circle({
-              radius: 6, fill: fill, stroke: stroke
-            }),
-            text: new ol.style.Text({
-              text: dotTable[i].id,
-              fill: new ol.style.Fill({color: '#000'}),
-              textAlign: 'left',
-              offsetX: 10
-            })
-          }));
-          sourceFeatures.addFeatures([feature]);
-        }
-      }).then(res => {
-        // 将数据库中的所有边显示在地图上
-        this.$axios.get('/api/roads')
-          .then(res => {
-            var edgeColor=['#333399','#ff9900','#009900','#cc0000'];
-            edgeTable=res.data.data;
-            for(var i in edgeTable){
-              var fromLoc=dotTable.find(o => o.id === edgeTable[i].fromid).location;
-              var toLoc=dotTable.find(o => o.id === edgeTable[i].toid).location;
-              var points=new Array(
-                trans(fromLoc),trans(toLoc)
-              );
-              var line=new ol.geom.LineString(points);
-              var layerEdge = new ol.layer.Vector({
-                source: new ol.source.Vector({
-                  features: [
-                    new ol.Feature({ geometry: line })
-                  ]
-                }),
-                style: [
-                  new ol.style.Style({
-                    stroke: new ol.style.Stroke({
-                      width: 3,
-                      color: edgeColor[edgeTable[i].type],
-                      lineDash: [.1, 5]
-                    }),
-                    text: new ol.style.Text({
-                      font: '16px sans-serif',
-                      text: edgeTable[i].id,
-                      fill: new ol.style.Fill({color: '#000'})
-                    })
-                  })
-                ]
-              });
-              map.addLayer(layerEdge);
-            }
-          }).catch(err => {
-            console.log(err);
-          })
-      }).catch(err => {
-        console.log(err);
-      });
+    this.displayData();
     
     markerEl = document.getElementById('geo-marker');
     marker = new ol.Overlay({

@@ -127,12 +127,12 @@
             </el-button-group>
             <el-tabs type="border-card">
               <el-tab-pane label="nearby">
-                <el-table :data="routeData.path" height="500" stripe style="width: 100%">
+                <el-table :data="nearby" height="500" stripe style="width: 100%">
+                  <el-table-column prop="dist" label="dist" width="60"></el-table-column>
                   <el-table-column prop="id" label="id" width="60"></el-table-column>
-                  <el-table-column prop="fromid" label="fromid" width="90"></el-table-column>
-                  <el-table-column prop="toid" label="toid" width="60"></el-table-column>
+                  <el-table-column prop="name" label="name" width="60"></el-table-column>
                   <el-table-column prop="type" label="type" width="60"></el-table-column>
-                  <el-table-column prop="efficiency" label="efficiency" width="90"></el-table-column>
+                  <el-table-column prop="description" label="description" width="120"></el-table-column>
                 </el-table>
               </el-tab-pane>
               <el-tab-pane label="travel plan">
@@ -149,7 +149,9 @@
                   <el-table-column prop="id" label="id" width="60"></el-table-column>
                   <el-table-column prop="name" label="name" width="60"></el-table-column>
                   <el-table-column prop="type" label="type" width="60"></el-table-column>
+                  <!--
                   <el-table-column prop="location" label="location" width="120"></el-table-column>
+                  -->
                   <el-table-column prop="description" label="description" width="120"></el-table-column>
                   <el-table-column label="operation" width="180">
                     <template slot-scope="scope">
@@ -348,6 +350,7 @@ export default {
       facilitys: [],
       citiesRisk: [],
       paths: [],
+      nearby: [],
       routeData: { path: [{fromid: 0}] },
       vehiclesTimetable: [],
       travelersStatus: [],
@@ -405,6 +408,7 @@ export default {
       this.$axios.get('/api/facilitys')// !
         .then(res => {
           this.facilitys = res.data.data
+          //this.facilitys = 
         })
         .catch(err => {
           console.log('error', err)
@@ -591,6 +595,19 @@ export default {
         console.log(err);
       });
     },
+    getNearby(location, distance) {
+      let string = ''
+      if (distance != null) {
+        string = `&distance=${distance}`;
+      }
+      this.$axios.get(`/api/facilitys/around?position=${location}` + string)// !
+        .then(res => {
+          this.nearby = res.data.data
+        })
+        .catch(err => {
+          console.log('error', err)
+        })
+    },
     updateData() {
     },
     initAnimation() {
@@ -667,6 +684,7 @@ export default {
     var popup = new ol.Overlay({
       element: document.getElementById('popup'),
     });
+    var self = this;
     map.addOverlay(popup);
     map.on('singleclick', function (evt) {
       //this.visible = ture;
@@ -677,6 +695,7 @@ export default {
       var EPSG4326coordinate = transform(coordinate, 'EPSG:3857' ,'EPSG:4326');
       // console.log(EPSG4326coordinate);
       lastclick[lastclickp] = EPSG4326coordinate;
+      self.getNearby(EPSG4326coordinate, 50);
       // console.log('click: ' + lastclick[lastclickp] + ' and ' + lastclick[1 - lastclickp]);
       var hdms = toStringHDMS(toLonLat(coordinate));
       $(element).popover('dispose');
@@ -703,9 +722,8 @@ export default {
     map.addOverlay(marker);
 
     //fire the animation
-    var self = this;
     var animation = function () {
-      if (self.posisiontNow < polyline.length && isPlay) {
+      if (polyline != null && self.posisiontNow < polyline.length && isPlay) {
         self.posisiontNow++;
         lineString.setCoordinates(polyline.slice(0,self.posisiontNow+1));
         marker.setPosition(polyline[self.posisiontNow]);

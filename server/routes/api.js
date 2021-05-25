@@ -1,17 +1,20 @@
-var express = require('express');
-var router = express.Router();
+var express = require('express')
+var router = express.Router()
 const {
+  getCurrentTime,
+  getCurrentState,
   createFacility,
   getFacility,
   updateFacility,
   getFacilitys,
   getFacilitysAround,
+  deleteFacility,
   createRoad,
   getRoad,
   getRoads,
 
   queryToNum,
-  
+
   getVehiclesTimetable,
   addVehiclesTimetable,
   updateVehiclesTimetable,
@@ -21,10 +24,10 @@ const {
   addCitiesRisk,
   updateCitiesRisk,
   deleteCitiesRisk,
-  getLog
+  getLog,
 } = require('../controller/utils')
 const { SuccessModel, ErrorModel } = require('../model/resModel')
-const {getShortestPath, getPassbyShortestPath} = require('../controller/model.js')
+const { getShortestPath, getPassbyShortestPath } = require('../controller/model.js')
 
 /* GET api listing. */
 router.get('/', function (req, res, next) {
@@ -34,12 +37,15 @@ router.get('/', function (req, res, next) {
     post   /facility?name=&type=&position=&description=<br>
     get    /facilitys?description=<br>
     get    /facility<br>
-    put    /facility?id=&description=<br>
+    put    /facility?id=&name=&type=&description=<br>
     get    /facilitys/around?distance=<br>
+    delete /facility?id=<br>
     post   /road?type=&fromid=&toid=&efficiency=<br>
     get    /roads<br>
     get    /road<br>
     post   /plan?startid=&endid=&type=<br>
+    get    /current/time<br>
+    get    /current/state<br>
 
     get    /vehicles/timetable<br>
     post   /vehicles/timetable<br>
@@ -50,50 +56,45 @@ router.get('/', function (req, res, next) {
     put    /cities/risk<br>
     delete /cities/risk<br>
     get    /log<br>
-  `);
-});
+  `)
+})
 
 router.get('/facility', function (req, res, next) {
   const id = req.query.id
   const result = getFacility(id)
   return result.then(result => {
-    res.json(
-      new SuccessModel(result)
-    )
+    res.json(new SuccessModel(result))
   })
-});
+})
 
 router.get('/facilitys', function (req, res, next) {
-  const desc =  req.query.description || ''
+  const desc = req.query.description || ''
   const result = getFacilitys(desc)
   return result.then(result => {
-    res.json(
-      new SuccessModel(result)
-    )
+    res.json(new SuccessModel(result))
   })
-});
+})
 
 router.get('/facilitys/around', function (req, res, next) {
   const nowlocation = req.query.position
   const distance = req.query.distance || 50
   const result = getFacilitysAround(nowlocation, distance)
   return result.then(result => {
-    res.json(
-      new SuccessModel(result)
-    )
+    for (var i = 0; i < result.length; i++) result[i].dist = result[i].dist.toFixed(2)
+    res.json(new SuccessModel(result))
   })
-});
+})
 
 router.put('/facility', function (req, res, next) {
   const id = req.query.id
+  const name = req.query.name
+  const type = req.query.type
   const description = req.query.description || ''
-  const result = updateFacility(id, description)
+  const result = updateFacility(id, name, type, description)
   return result.then(result => {
-    res.json(
-      new SuccessModel(result)
-    )
+    res.json(new SuccessModel(result))
   })
-});
+})
 
 router.post('/facility', function (req, res, next) {
   const position = req.query.position
@@ -102,31 +103,33 @@ router.post('/facility', function (req, res, next) {
   const dscpn = req.query.description || ''
   console.log(position)
   const result = createFacility(name, type, position, dscpn)
-  return result.then(result=>{
-    res.json(
-      new SuccessModel(result)
-    )
+  return result.then(result => {
+    res.json(new SuccessModel(result))
   })
-});
+})
+
+router.delete('facility', function (req, res, next) {
+  const id = req.query.id
+  const result = deleteFacility(id)
+  return result.then(result => {
+    res.json(new SuccessModel(result))
+  })
+})
 
 router.get('/road', function (req, res, next) {
   const id = req.query.id
   const result = getRoad(id)
   return result.then(result => {
-    res.json(
-      new SuccessModel(result)
-    )
+    res.json(new SuccessModel(result))
   })
-});
+})
 
 router.get('/roads', function (req, res, next) {
   const result = getRoads()
   return result.then(result => {
-    res.json(
-      new SuccessModel(result)
-    )
+    res.json(new SuccessModel(result))
   })
-});
+})
 
 router.post('/road', function (req, res, next) {
   const fromid = req.query.fromid
@@ -134,12 +137,10 @@ router.post('/road', function (req, res, next) {
   const type = req.query.type
   const effi = req.query.efficiency || 1.0
   const result = createRoad(fromid, toid, type, effi)
-  return result.then(result=>{
-    res.json(
-      new SuccessModel(result)
-    )
+  return result.then(result => {
+    res.json(new SuccessModel(result))
   })
-});
+})
 
 router.post('/plan', function (req, res, next) {
   const startid = req.query.startid
@@ -147,31 +148,34 @@ router.post('/plan', function (req, res, next) {
   const type = req.query.type
   const passby = req.query.passby || null
   var result
-  console.log(startid,endid,type,passby);
-  if(type == 2) result = getPassbyShortestPath(startid, endid, passby)
+  if (type == 2) result = getPassbyShortestPath(startid, endid, passby)
   else result = getShortestPath(startid, endid, type)
-  return result.then(result=>{
-    console.log(`result:${result.answer}`)
-    console.log(result.path)
-    res.json(
-      new SuccessModel(result)
-    )
+  return result.then(result => {
+    res.json(new SuccessModel(result))
   })
-});
+})
 
-module.exports = router;
+router.get('/current/time', function (req, res, next) {
+  const result = getCurrentTime()
+  res.json(new SuccessModel(result))
+})
+
+router.get('/currnet/state', function (req, res, next) {
+  const result = getCurrentState()
+  res.json(new SuccessModel(result))
+})
+
+module.exports = router
 
 /* ------ TRASH ------ */
 
 router.get('/vehicles/timetable', function (req, res, next) {
   const result = getVehiclesTimetable()
   return result.then(result => {
-    res.json(
-      new SuccessModel(result)
-    )
+    res.json(new SuccessModel(result))
   })
   //!
-});
+})
 
 router.post('/vehicles/timetable', function (req, res, next) {
   const number = queryToNum(req.query.number)
@@ -183,12 +187,10 @@ router.post('/vehicles/timetable', function (req, res, next) {
   const risk = queryToNum(req.query.risk)
   const result = addVehiclesTimetable(number, type, departure, departureTime, arrival, arrivalTime, risk)
   return result.then(result => {
-    res.json(
-      new SuccessModel(result)
-    )
+    res.json(new SuccessModel(result))
   })
   //!
-});
+})
 
 router.put('/vehicles/timetable', function (req, res, next) {
   const number = queryToNum(req.query.number)
@@ -200,78 +202,64 @@ router.put('/vehicles/timetable', function (req, res, next) {
   const risk = queryToNum(req.query.risk)
   const result = updateVehiclesTimetable(number, type, departure, departureTime, arrival, arrivalTime, risk)
   return result.then(result => {
-    res.json(
-      new SuccessModel(result)
-    )
+    res.json(new SuccessModel(result))
   })
   //!
-});
+})
 
 router.delete('/vehicles/timetable', function (req, res, next) {
   const number = queryToNum(req.query.number)
   const result = deleteVehiclesTimetable(number)
   return result.then(result => {
-    res.json(
-      new SuccessModel(result)
-    )
+    res.json(new SuccessModel(result))
   })
   //!
-});
+})
 
 router.get('/cities/risk', function (req, res, next) {
   const result = getCitiesRisk()
   return result.then(result => {
-    res.json(
-      new SuccessModel(result)
-    )
+    res.json(new SuccessModel(result))
   })
   //!
-});
+})
 
 router.post('/cities/risk', function (req, res, next) {
   const city = req.query.city || ''
   const risk = queryToNum(req.query.risk)
   const result = addCitiesRisk(city, risk)
   return result.then(result => {
-    res.json(
-      new SuccessModel(result)
-    )
+    res.json(new SuccessModel(result))
   })
   //!
-});
+})
 
 router.put('/cities/risk', function (req, res, next) {
   const city = req.query.city || ''
   const risk = queryToNum(req.query.risk)
   const result = updateCitiesRisk(city, risk)
   return result.then(result => {
-    res.json(
-      new SuccessModel(result)
-    )
+    res.json(new SuccessModel(result))
   })
   //!
-});
+})
 
 router.delete('/cities/risk', function (req, res, next) {
   const city = req.query.city || ''
   const result = deleteCitiesRisk(city)
   return result.then(result => {
-    res.json(
-      new SuccessModel(result)
-    )
+    res.json(new SuccessModel(result))
   })
   //!
-});
+})
 
 router.get('/log', function (req, res, next) {
   const result = getLog()
   return result.then(result => {
-    res.json(
-      new SuccessModel(result)
-    )
+    res.json(new SuccessModel(result))
   })
   //!
-});
+})
 
 router.post('/login', function (req, res, next) {
   const { username, password } = req.body
@@ -279,7 +267,7 @@ router.post('/login', function (req, res, next) {
     errno: 0,
     data: {
       username,
-      password
-    }
+      password,
+    },
   })
-});
+})

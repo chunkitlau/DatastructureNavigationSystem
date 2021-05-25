@@ -1,9 +1,11 @@
 const { exec } = require('../database/mysql')
+const { SBplans, SBterminal, RWterminal } = require('../config/schoolBusTimetable')
+const { DIST_BETWEEN_CAMPUS, BUS_TIME, RAILWAY_TIME, DEFAULT_RADIUS, SPEED } = require('../config/constants')
+const { getCurrentTime } = require('./utils')
 
 const DEBUG = 0
 const TEST = 0
-const DEFAULT_RADIUS = 6371008.8
-const SPEED = [1.4, 4.2, 8.4, 13.9]
+const DEBUG_DETAIL = 0
 
 var initialFLAG = 0
 var dots
@@ -87,7 +89,6 @@ class PriorityQueue {
 
 /**
  * Converts degrees to radians.
- *
  * @param {number} angleInDegrees Angle in degrees.
  * @return {number} Angle in radians.
  */
@@ -123,8 +124,10 @@ const Dist = (dotA, dotB) => {
  */
 const calcCost = (dotA, dotB, edge, strategy) => {
   let speed = SPEED[0]
+  let efficiency = 1
   if (strategy == 3) speed = SPEED[edge.type]
-  return (Dist(dotA, dotB) / speed) * edge.efficiency
+  if (strategy == 1 || strategy == 3) efficiency = edge.efficiency
+  return (Dist(dotA, dotB) / speed) * efficiency
 }
 /**
  * get ready for dijkstra algorithm
@@ -132,7 +135,6 @@ const calcCost = (dotA, dotB, edge, strategy) => {
 const Dijkstra_initial = () => {
   const promise = new Promise((resolve, reject) => {
     if (initialFLAG == 1) {
-      console.log(111111);
       resolve()
     } else {
       let sql = `select * from dottable`
@@ -142,7 +144,7 @@ const Dijkstra_initial = () => {
         exec(sql).then(edgetable => {
           edges = edgetable
           initialFLAG = 1
-          console.log(`Dijkstra initilized.`)
+          if (DEBUG) console.log(`Dijkstra initilized.`)
           edgeNum = edges.length
           for (var i = 0; i < edgeNum; i++) {
             edges.push({
@@ -172,11 +174,11 @@ const Dijkstra_initial = () => {
  * @param {number} startDotID departure dot ID
  * @param {number} endDotID arrival dot ID
  * @param {number} strategy strategy to move
- * @returns {number, {Array}} {answer, path} time cost and path for current plan
+ * @returns {object{number, {Array}}} {answer, path} time cost and path for current plan
  * Answer saved into pathtoLoc
  */
 const Dijkstra = (startDotID, endDotID, strategy) => {
-  console.log(`Running DIJ: start: ${startDotID}, end: ${endDotID}, strategy: ${strategy}`)
+  if (DEBUG) console.log(`Running DIJ: start: ${startDotID}, end: ${endDotID}, strategy: ${strategy}`)
 
   var pq = new PriorityQueue(strategy)
   var befEdge = new Array()
@@ -191,7 +193,6 @@ const Dijkstra = (startDotID, endDotID, strategy) => {
     nowState = pq.top()
     pq.pop()
     if (dist[nowState.id] == undefined || dist[nowState.id] < nowState.dist) {
-      if (DEBUG) console.log(`${nowState.id} discard.`)
       continue
     }
     dist[nowState.id] = nowState.dist
@@ -208,14 +209,15 @@ const Dijkstra = (startDotID, endDotID, strategy) => {
           fromid: tmp.fromid,
           toid: tmp.toid,
           efficiency: tmp.efficiency,
+          dist: dist[tmp.toid] - dist[tmp.fromid],
         })
         index = befEdge[index].fromid
       }
       break
     }
-    if (DEBUG) console.log(`now state: ${nowState.id}, ${nowState.dist}`)
+    if (DEBUG_DETAIL) console.log(`now state: ${nowState.id}, ${nowState.dist}`)
     for (var nowEdge = firstEdge[nowState.id]; nowEdge != null; nowEdge = nextEdge[nowEdge]) {
-      if (DEBUG) console.log(`next dot ${edges[nowEdge].toid}: ${dots[mapDot[edges[nowEdge].toid]].name}`)
+      if (DEBUG_DETAIL) console.log(`next dot ${edges[nowEdge].toid}: ${dots[mapDot[edges[nowEdge].toid]].name}`)
       nextState = {
         id: edges[nowEdge].toid,
         dist:
@@ -223,7 +225,7 @@ const Dijkstra = (startDotID, endDotID, strategy) => {
           calcCost(dots[mapDot[edges[nowEdge].fromid]], dots[mapDot[edges[nowEdge].toid]], edges[nowEdge], strategy),
       }
       if (dist[nextState.id] == undefined || dist[nextState.id] > nextState.dist) {
-        if (DEBUG) console.log(`push ${nextState.id},${nextState.dist}`)
+        if (DEBUG_DETAIL) console.log(`push ${nextState.id},${nextState.dist}`)
         befEdge[nextState.id] = edges[nowEdge]
         dist[nextState.id] = nextState.dist
         pq.push(nextState)
@@ -233,23 +235,114 @@ const Dijkstra = (startDotID, endDotID, strategy) => {
   return { answer: answer, path: pathToLoc.reverse() }
 }
 
+const across = (startDotID, endDotID) => {
+  const dist = Dist(dots[startDotID], dots[endDotID])
+  const dist1 = Dist(dots[startDotID], dots[0]) //
+  return dist < DIST_BETWEEN_CAMPUS ? 0 : dist1 < DIST_BETWEEN_CAMPUS ? 1 : -1
+}
+
+/**
+ *
+ * @param {dot} dotX start dot
+ * @returns {[object]} bus station dots ID sorted by distance from start dot
+ */
+const getBusStationID = dotX => {
+  function sortByDistance(dotAID, dotBID) {
+    return Dist(dots[mapDot[dotAID]], dotX) - Dist(dotX, dots[mapDot[dotBID]])
+  }
+  result = SBterminal.sort(sortByDistance)
+  if (DEBUG) {
+    console.log(`Bus station ID list:`)
+    console.log(result)
+  }
+  return result
+}
+const getRailwayStationID = dotX => {
+  function sortByDistance(dotAID, dotBID) {
+    return Dist(dots[mapDot[dotAID]], dotX) - Dist(dotX, dots[mapDot[dotBID]])
+  }
+  result = RWterminal.sort(sortByDistance)
+  if (DEBUG) {
+    console.log(`Railway station ID list:`)
+    console.log(result)
+  }
+  return result
+}
+/**
+ *
+ * @param {time} time start time
+ * @param {number} sec seconds
+ * @returns {time} time after sec
+ */
+const getTimeAdd = (time, sec) => {
+  return {
+    hour:
+      (time.hour +
+        Math.floor(sec / 3600) +
+        Math.floor((time.minute + Math.floor((sec % 3600) / 60) + Math.floor((time.second + (sec % 60)) / 60)) / 60)) %
+      24,
+    minute: (time.minute + Math.floor((sec % 3600) / 60) + Math.floor((time.second + (sec % 60)) / 60)) % 60,
+    second: (time.second + (sec % 60)) % 60,
+  }
+}
+
 /**
  *
  * @param {number} startDotID departure dot ID
  * @param {number} endDotID arrival dot ID
  * @param {number} strategy strategy to move
- * @returns
  */
 const getShortestPath = (startDotID, endDotID, strategy) => {
   const promise = new Promise((resolve, reject) => {
     if (DEBUG) console.log(`Running ShortestPath.`)
     const dijInit = Dijkstra_initial()
     dijInit.then(() => {
-      const result = Dijkstra(startDotID, endDotID, strategy)
-      if (DEBUG) {
-        console.log(`answer:${result.answer}`)
-        console.log(result.path)
-      }
+      var result
+      var crossFlag = across(startDotID, endDotID)
+      if (crossFlag) {
+        // across campus navigation
+        var busStation = getBusStationID(dots[startDotID])
+        var railStation = getRailwayStationID(dots[startDotID])
+        const busResult1 = Dijkstra(startDotID, busStation[0], strategy)
+        const busResult2 = Dijkstra(busStation[1], endDotID, strategy)
+        const railResult1 = Dijkstra(startDotID, railStation[0], strategy)
+        const railResult2 = Dijkstra(railStation[1], endDotID, strategy)
+        const getWaitingTime = currentTime => {
+          for (let i = 0; i < SBplans.length; i++) {
+            if (SBplans[i].direction != crossFlag) continue
+            if (
+              SBplans[i].hour > currentTime.hour ||
+              (SBplans[i].hour == currentTime.hour && SBplans[i].minute > currentTime.minute)
+            ) {
+              return (
+                (SBplans[i].hour - currentTime.hour) * 3600 +
+                (SBplans[i].minute - currentTime.minute) * 60 -
+                currentTime.second
+              )
+            }
+          }
+        }
+        bus_result = {
+          answer:
+            busResult1.answer +
+            getWaitingTime(getTimeAdd(getCurrentTime(), Math.floor(busResult1.answer))) +
+            BUS_TIME +
+            busResult2.answer,
+          path: busResult1.path.concat(busResult2.path),
+        }
+        rail_result = {
+          answer: railResult1.answer + RAILWAY_TIME + railResult2.answer,
+          path: railResult1.path.concat(railResult2.path),
+        }
+        result = bus_result.answer < rail_result.answer ? bus_result : rail_result
+        if (DEBUG) {
+          console.log(`crossFlag: ${crossFlag}`)
+          console.log(`By bus:`)
+          console.log(bus_result)
+          console.log(`By railway:`)
+          console.log(rail_result)
+        }
+      } else result = Dijkstra(startDotID, endDotID, strategy)
       resolve({ answer: result.answer, path: result.path })
     }, null)
   }, null)
@@ -261,7 +354,7 @@ const getShortestPath = (startDotID, endDotID, strategy) => {
  * @param {number} startDotID departure dot ID
  * @param {number} endDotID arrival dot ID
  * @param {[numbers]} passbysID list of dots passing by
- * @returns
+ * @description start dot and end dot must be in SAME campus
  */
 const getPassbyShortestPath = (startDotID, endDotID, passbysID) => {
   const promise = new Promise((resolve, reject) => {
@@ -270,7 +363,7 @@ const getPassbyShortestPath = (startDotID, endDotID, passbysID) => {
       var result
       var answer = 0
       var path = new Array()
-      console.log(`PassbyShortestPath`)
+      if (DEBUG) console.log(`PassbyShortestPath`)
       passbysID.push(endDotID)
       for (var i = 0; i < passbysID.length; i++) {
         endDotID = passbysID[i]
@@ -279,10 +372,6 @@ const getPassbyShortestPath = (startDotID, endDotID, passbysID) => {
         path = path.concat(result.path)
         startDotID = endDotID
       }
-      if (DEBUG) {
-        console.log(`answer:${answer}`)
-        console.log(path)
-      }
       resolve({ answer: answer, path: path })
     }, null)
   }, null)
@@ -290,17 +379,22 @@ const getPassbyShortestPath = (startDotID, endDotID, passbysID) => {
 }
 
 if (TEST) {
-  console.log(`default test: \n\tf1: getShortestPath(1,13,0)\n\tf2: getPassbyShortestPath(1, 13, [23,30])`)
-  // const f1 = getShortestPath(1, 13, 0)
-  // f1.then(result => {
-  //   console.log(result.answer)
-  //   console.log(result.path)
+  // Dijkstra_initial().then(() => {
+  //   // getBusStationID(dots[99])
+  //   // getRailwayStationID(dots[0])
   // })
-  const f2 = getPassbyShortestPath(1, 13, [23,30])
-  f2.then(result => {
+  // console.log(getTimeAdd({ hour: 8, minute: 20, second: 50 }, 6732))
+  // console.log(`default test: \n\tf1: getShortestPath(1,13,0)\n\tf2: getPassbyShortestPath(1, 13, [23,30])`)
+  const f1 = getShortestPath(1, 69, 0)
+  f1.then(result => {
     console.log(result.answer)
     console.log(result.path)
   })
+  // const f2 = getPassbyShortestPath(1, 13, [23,30])
+  // f2.then(result => {
+  //   console.log(result.answer)
+  //   console.log(result.path)
+  // })
 }
 
 module.exports = {

@@ -20,10 +20,6 @@ const {
   updateVehiclesTimetable,
   deleteVehiclesTimetable,
 
-  getCitiesRisk,
-  addCitiesRisk,
-  updateCitiesRisk,
-  deleteCitiesRisk,
   getLog,
 } = require('../controller/utils')
 const { SuccessModel, ErrorModel } = require('../model/resModel')
@@ -51,10 +47,6 @@ router.get('/', function (req, res, next) {
     post   /vehicles/timetable<br>
     put    /vehicles/timetable<br>
     delete /vehicles/timetable<br>
-    get    /cities/risk<br>
-    post   /cities/risk<br>
-    put    /cities/risk<br>
-    delete /cities/risk<br>
     get    /log<br>
   `)
 })
@@ -210,43 +202,6 @@ router.put('/vehicles/timetable', function (req, res, next) {
 router.delete('/vehicles/timetable', function (req, res, next) {
   const number = queryToNum(req.query.number)
   const result = deleteVehiclesTimetable(number)
-  return result.then(result => {
-    res.json(new SuccessModel(result))
-  })
-  //!
-})
-
-router.get('/cities/risk', function (req, res, next) {
-  const result = getCitiesRisk()
-  return result.then(result => {
-    res.json(new SuccessModel(result))
-  })
-  //!
-})
-
-router.post('/cities/risk', function (req, res, next) {
-  const city = req.query.city || ''
-  const risk = queryToNum(req.query.risk)
-  const result = addCitiesRisk(city, risk)
-  return result.then(result => {
-    res.json(new SuccessModel(result))
-  })
-  //!
-})
-
-router.put('/cities/risk', function (req, res, next) {
-  const city = req.query.city || ''
-  const risk = queryToNum(req.query.risk)
-  const result = updateCitiesRisk(city, risk)
-  return result.then(result => {
-    res.json(new SuccessModel(result))
-  })
-  //!
-})
-
-router.delete('/cities/risk', function (req, res, next) {
-  const city = req.query.city || ''
-  const result = deleteCitiesRisk(city)
   return result.then(result => {
     res.json(new SuccessModel(result))
   })

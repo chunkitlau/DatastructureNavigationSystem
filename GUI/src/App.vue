@@ -68,20 +68,6 @@
                   <el-button type="primary" @click="setNavigateFormVisible = false, setNavigate()">confirm</el-button>
                 </div>
               </el-dialog>
-              <el-dialog title="adding" :visible.sync="addDialogFormVisible">
-                <el-form :model="form">
-                  <el-row>
-                    <el-button @click="addDialogFormVisible = false, addVehiclesTimetableVisible = true" type="primary" icon="el-icon-circle-plus-outline">add vehicles timetable</el-button>
-                  </el-row>
-                  <el-row>
-                    <el-button @click="addDialogFormVisible = false, addCitiesRiskVisible = true" type="primary" icon="el-icon-circle-plus-outline">add cities risk</el-button>
-                  </el-row>
-                </el-form>
-                <div slot="footer" class="dialog-footer">
-                  <el-button @click="addDialogFormVisible = false">cancel</el-button>
-                  <el-button type="primary" @click="addDialogFormVisible = false">confirm</el-button>
-                </div>
-              </el-dialog>
               <el-dialog title="adding vehicles timetable" :visible.sync="addVehiclesTimetableVisible">
                 <el-form :model="form">
                   <el-form-item label="number" :label-width="formLabelWidth">
@@ -697,12 +683,6 @@ export default {
         })
     },
     handlePlay() {
-      /*
-      if (!isInitAnimation) {
-        this.initAnimation();
-        isInitAnimation = tue;
-      }
-      */
       isPlay = true;
     },
     handlePause() {

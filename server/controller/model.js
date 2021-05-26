@@ -235,6 +235,12 @@ const Dijkstra = (startDotID, endDotID, strategy) => {
   return { answer: answer, path: pathToLoc.reverse() }
 }
 
+/**
+ *
+ * @param {number} startDotID start dot id
+ * @param {number} endDotID end dot id
+ * @returns 0: needn't across, -1: Main -> ShaHe, 1: ShaHe -> Main
+ */
 const across = (startDotID, endDotID) => {
   const dist = Dist(dots[startDotID], dots[endDotID])
   const dist1 = Dist(dots[startDotID], dots[0]) //
@@ -257,6 +263,12 @@ const getBusStationID = dotX => {
   }
   return result
 }
+
+/**
+ *
+ * @param {dot} dotX start dot
+ * @returns {[object]} railway station dots ID sorted by distance from start dot
+ */
 const getRailwayStationID = dotX => {
   function sortByDistance(dotAID, dotBID) {
     return Dist(dots[mapDot[dotAID]], dotX) - Dist(dotX, dots[mapDot[dotBID]])
@@ -268,6 +280,7 @@ const getRailwayStationID = dotX => {
   }
   return result
 }
+
 /**
  *
  * @param {time} time start time
@@ -401,26 +414,3 @@ module.exports = {
   getShortestPath,
   getPassbyShortestPath,
 }
-
-// ------  TRASH  -----
-
-// const getShortestPath = (stardDot, endDotID, strategy) => {
-//   const result = runShortestPath(stardDot, endDotID, strategy)
-//   return result
-// }
-
-// async function findInBase(dot) {
-//   var sql = `select * from dottable where `
-//   if (dot.id != null) sql = sql + `id = ${dot.id};`
-//   else sql = sql + `name = \'${dot.name}\';`
-//   console.log(sql)
-//   let result = exec(sql)
-//   result.then(result => {
-//     // console.log(result[0].location.x)
-//     result = result[0]
-//     dot.id = result.id
-//     dot.type = result.type
-//     dot.name = result.name
-//     dot.loc = result.location
-//   })
-// }

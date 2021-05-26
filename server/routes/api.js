@@ -143,10 +143,12 @@ router.post('/road', function (req, res, next) {
 })
 
 router.post('/plan', function (req, res, next) {
-  const startid = req.query.startid
-  const endid = req.query.endid
-  const type = req.query.type
-  const passby = req.query.passby || null
+  const startid = parseInt(req.query.startid)
+  const endid = parseInt(req.query.endid)
+  const type = parseInt(req.query.type)
+  const passby = req.body || null
+  if (passby != null) for (let i = 0; i < passby.length; i++) passby[i] = parseInt(passby[i].value)
+  console.log(startid, endid, type, passby);
   var result
   if (type == 2) result = getPassbyShortestPath(startid, endid, passby)
   else result = getShortestPath(startid, endid, type)

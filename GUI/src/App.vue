@@ -17,6 +17,14 @@
           <el-main height="80%">
             <span>Current time: {{ Math.floor(currentTime / 3600) }} hour {{ Math.floor(currentTime / 60) }} minute {{ currentTime }} second</span><br>
             <span>Current position: id = {{ currentPositionID }} name = {{ currentPositionName }} </span>
+            <el-switch
+                style="display: block"
+                v-model="buptCampusValue"
+                active-color="#13ce66"
+                inactive-color="#409EFF"
+                active-text="buptShaheCampus"
+                inactive-text="buptMainCampus">
+              </el-switch>
             <el-button-group>
               <el-button @click="handlePlay" type="success" icon="el-icon-video-play">play</el-button>
               <el-button @click="handlePause" type="warning" icon="el-icon-video-pause">pause</el-button>
@@ -274,6 +282,10 @@ var buptCampus = new ol.View({
   zoom: 11.7
 });
 
+// 地图当前视角
+var buptCampusValue = 0;
+var buptCampusView = [buptMainCampus, buptShaheCampus, buptCampus];
+
 // ol样式
 var styles = {
   'route': new ol.style.Style({
@@ -317,9 +329,6 @@ var styles = {
   }),
 };
 
-// 地图当前视角
-var viewNow = buptShaheCampus;
-
 // 目前的一些features基本上都是往sourceFeatures里面加的
 var sourceFeatures = new ol.source.Vector();
 var layerFeatures = new ol.layer.Vector({ source: sourceFeatures });
@@ -352,6 +361,7 @@ export default {
       map: null,
       currentTime: 0,
       posisiontNow: 0,
+      buptCampusValue: 0,
       setNavigateFormVisible: false,
       addDialogFormVisible: false,
       addTravelersPlansVisible: false,
@@ -423,6 +433,13 @@ export default {
       }
     },
   },
+  watch: {
+    // 如果 `question` 发生改变，这个函数就会运行
+    buptCampusValue: function (newBuptCampusValue, oldBuptCampusValue) {
+      buptCampusValue = Number(newBuptCampusValue)
+      map.setView(buptCampusView[buptCampusValue]);
+    }
+  },
   methods: {
     removePathpoint(item) {
       var index = this.navigateForm.strategy.pathpoints.indexOf(item)
@@ -437,23 +454,16 @@ export default {
       });
     },
     setNavigate() {
-      this.$axios.post(`/api/plan?startid=${this.navigateForm.departure}&endid=${this.navigateForm.arrival}&type=${this.navigateForm.strategy.strategy}`, this.navigateForm.strategy.pathpoints)
-        .then(res => {
-          console.log(res)
-          if (this.posisiontNow) {
-            this.posisiontNow = 0;
-          }
-          else {
-            this.posisiontNow = 1;
-            this.posisiontNow = 0;
-          }
-          this.initAnimation();
-          isInitAnimation = true;
-          isPlay = false;
-        })
-        .catch(err => {
-          console.log('error',err)
-        })
+      if (this.posisiontNow) {
+        this.posisiontNow = 0;
+      }
+      else {
+        this.posisiontNow = 1;
+        this.posisiontNow = 0;
+      }
+      this.initAnimation();
+      isInitAnimation = true;
+      isPlay = false;
     },
     getFacilitys() {
       this.$axios.get('/api/facilitys')// !
@@ -662,7 +672,7 @@ export default {
     updateData() {
     },
     initAnimation() {
-      this.$axios.post(`/api/plan?startid=${this.navigateForm.departure}&endid=${this.navigateForm.arrival}&type=${this.navigateForm.strategy}`)// !
+      this.$axios.post(`/api/plan?startid=${this.navigateForm.departure}&endid=${this.navigateForm.arrival}&type=${this.navigateForm.strategy.strategy}`, this.navigateForm.strategy.pathpoints)
         .then(res => {
           lineString.setCoordinates([]);
           this.routeData=res.data.data;
@@ -720,7 +730,7 @@ export default {
     // 地图对象，有layerRoute和layerFeatures层
     map = new ol.Map({
       target: 'map',
-      view: viewNow,
+      view: buptCampusView[buptCampusValue],
       renderer: 'canvas',
       layers: [
         new ol.layer.Tile({

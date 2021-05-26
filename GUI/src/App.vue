@@ -35,10 +35,24 @@
               <el-dialog title="navigate" :visible.sync="setNavigateFormVisible">
                 <el-form :model="navigateForm">
                   <el-form-item label="departure" :label-width="formLabelWidth">
-                    <el-input v-model="navigateForm.departure" autocomplete="off"></el-input>
+                    <el-select v-model="navigateForm.departure" filterable placeholder="please select departure">
+                      <el-option
+                        v-for="facility in facilitys"
+                        :key="facility.id"
+                        :label="facility.name"
+                        :value="facility.id">
+                      </el-option>
+                    </el-select>
                   </el-form-item>
                   <el-form-item label="arrival" :label-width="formLabelWidth">
-                    <el-input v-model="navigateForm.arrival" autocomplete="off"></el-input>
+                    <el-select v-model="navigateForm.arrival" filterable placeholder="please select arrival">
+                      <el-option
+                        v-for="facility in facilitys"
+                        :key="facility.id"
+                        :label="facility.name"
+                        :value="facility.id">
+                      </el-option>
+                    </el-select>
                   </el-form-item>
                   <el-form-item label="strategy" :label-width="formLabelWidth">
                     <el-select v-model="navigateForm.strategy.strategy" placeholder="Please select strategy">
@@ -47,15 +61,12 @@
                   </el-form-item>
                   <div v-if="navigateForm.strategy.strategy == '2'">
                     <el-form-item
-                    :label-width="formLabelWidth"
-                    v-for="(pathpoint, index) in navigateForm.strategy.pathpoints"
-                    :label="'pathpoint ' + index"
-                    :key="pathpoint.key"
-                    :prop="'pathpoints.' + index + '.value'"
-                    :rules="{
-                      required: true, message: 'pathpoint can\'t be empty', trigger: 'blur'
-                    }"
-                  >
+                      :label-width="formLabelWidth"
+                      v-for="(pathpoint, index) in navigateForm.strategy.pathpoints"
+                      :label="'pathpoint ' + index"
+                      :key="pathpoint.key"
+                      :prop="'pathpoints.' + index + '.value'"
+                      :rules="{required: true, message: 'pathpoint can\'t be empty', trigger: 'blur'}">
                     <el-input v-model="pathpoint.value"></el-input><el-button @click.prevent="removePathpoint(pathpoint)">delete</el-button>
                   </el-form-item>
                   <el-form-item :label-width="formLabelWidth">
@@ -66,20 +77,6 @@
                 <div slot="footer" class="dialog-footer">
                   <el-button @click="setNavigateFormVisible = false">cancel</el-button>
                   <el-button type="primary" @click="setNavigateFormVisible = false, setNavigate()">confirm</el-button>
-                </div>
-              </el-dialog>
-              <el-dialog title="adding" :visible.sync="addDialogFormVisible">
-                <el-form :model="form">
-                  <el-row>
-                    <el-button @click="addDialogFormVisible = false, addVehiclesTimetableVisible = true" type="primary" icon="el-icon-circle-plus-outline">add vehicles timetable</el-button>
-                  </el-row>
-                  <el-row>
-                    <el-button @click="addDialogFormVisible = false, addCitiesRiskVisible = true" type="primary" icon="el-icon-circle-plus-outline">add cities risk</el-button>
-                  </el-row>
-                </el-form>
-                <div slot="footer" class="dialog-footer">
-                  <el-button @click="addDialogFormVisible = false">cancel</el-button>
-                  <el-button type="primary" @click="addDialogFormVisible = false">confirm</el-button>
                 </div>
               </el-dialog>
               <el-dialog title="adding vehicles timetable" :visible.sync="addVehiclesTimetableVisible">
@@ -381,10 +378,8 @@ export default {
       roadForm: { type: '', departure: '', arrival: '', efficiency: '' },
       travelersPlansForm: { id: '', requestTime: '', departure: '', arrival: '', plan: '' },
       vehiclesTimetableForm: { number: '', type: '', departure: '', departureTime: '', arrival: '', arrivalTime: '', risk: '' },
-      citiesRiskForm: { city: '', risk: '' },
       form: {},
       facilitys: [],
-      citiesRisk: [],
       paths: [],
       nearby: [],
       routeData: { path: [{fromid: 0}] },
@@ -697,12 +692,6 @@ export default {
         })
     },
     handlePlay() {
-      /*
-      if (!isInitAnimation) {
-        this.initAnimation();
-        isInitAnimation = tue;
-      }
-      */
       isPlay = true;
     },
     handlePause() {

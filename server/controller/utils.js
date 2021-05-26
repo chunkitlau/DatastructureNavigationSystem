@@ -116,33 +116,6 @@ const deleteVehiclesTimetable = number => {
   return exec(sql)
 }
 
-const getCitiesRisk = () => {
-  const sql = `select * from citiesrisk;`
-  return exec(sql)
-}
-
-const addCitiesRisk = (city, risk) => {
-  const sql = `
-    insert into citiesrisk(city, risk)
-    values('${city}', ${risk});
-  `
-  return exec(sql)
-}
-
-const updateCitiesRisk = (city, risk) => {
-  const sql = `
-    update citiesrisk set risk=${risk} where city='${city}';
-  `
-  return exec(sql)
-}
-
-const deleteCitiesRisk = city => {
-  const sql = `
-    delete from citiesrisk where city='${city}';
-  `
-  return exec(sql)
-}
-
 const getLog = () => {
   const sql = `select * from log;`
   return exec(sql)
@@ -168,9 +141,5 @@ module.exports = {
   updateVehiclesTimetable,
   deleteVehiclesTimetable,
 
-  getCitiesRisk,
-  addCitiesRisk,
-  updateCitiesRisk,
-  deleteCitiesRisk,
   getLog,
 }

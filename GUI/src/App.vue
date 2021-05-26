@@ -15,7 +15,7 @@
             <span>校园导览系统</span>
           </el-header>
           <el-main height="80%">
-            <span>Current time: {{ Math.floor(currentTime / 3600) }} hour {{ Math.floor(currentTime / 60) }} minute {{ currentTime }} second</span><br>
+            <span>Current time: {{ Math.floor(currentTime / 3600) }} hour {{ Math.floor(currentTime / 60) }} minute {{ Math.floor(currentTime) % 60 }} second</span><br>
             <span>Current position: id = {{ currentPositionID }} name = {{ currentPositionName }} </span>
             <el-switch style="display: block" v-model="buptCampusValue" active-color="#13ce66" inactive-color="#409EFF" active-text="buptShaheCampus" inactive-text="buptMainCampus"></el-switch>
             <el-button-group>

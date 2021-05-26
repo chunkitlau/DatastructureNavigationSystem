@@ -39,7 +39,7 @@
                       <el-option
                         v-for="facility in facilitysOptions"
                         :key="facility.id"
-                        :label="facility.name"
+                        :label="facility.name + ': ' + facility.description"
                         :value="facility.id">
                       </el-option>
                     </el-select>
@@ -49,7 +49,7 @@
                       <el-option
                         v-for="facility in facilitysOptions"
                         :key="facility.id"
-                        :label="facility.name"
+                        :label="facility.name + ': ' + facility.description"
                         :value="facility.id">
                       </el-option>
                     </el-select>

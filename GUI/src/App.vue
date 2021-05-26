@@ -50,7 +50,10 @@
                       :key="pathpoint.key"
                       :prop="'pathpoints.' + index + '.value'"
                       :rules="{required: true, message: 'pathpoint can\'t be empty', trigger: 'blur'}">
-                    <el-input v-model="pathpoint.value"></el-input><el-button @click.prevent="removePathpoint(pathpoint)">delete</el-button>
+                    <el-select v-model="pathpoint.value" filterable remote reserve-keyword :remote-method="searchFacilitys" placeholder="please select pathpoint">
+                      <el-option v-for="facility in facilitysOptions" :key="facility.id" :label="facility.name + ': ' + facility.description" :value="facility.id"></el-option>
+                    </el-select>
+                    <el-button @click.prevent="removePathpoint(pathpoint)">delete</el-button>
                   </el-form-item>
                   <el-form-item :label-width="formLabelWidth">
                     <el-button @click="addPathpoint">new pathpoint</el-button>
@@ -176,7 +179,7 @@
             -->
           </el-main>
           <el-footer height="10%">
-            Copyright © 2021 - present Chunkit Lau; all rights reserved
+            Copyright © 2021 - present Chunkit Lau, Jijun Chi, Hanyan Yin; all rights reserved
           </el-footer>
         </el-container>
       </el-aside>

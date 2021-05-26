@@ -35,21 +35,21 @@
               <el-dialog title="navigate" :visible.sync="setNavigateFormVisible">
                 <el-form :model="navigateForm">
                   <el-form-item label="departure" :label-width="formLabelWidth">
-                    <el-select v-model="navigateForm.departure" filterable placeholder="please select departure">
+                    <el-select v-model="navigateForm.departure" filterable remote reserve-keyword :remote-method="searchFacilitys" placeholder="please select departure">
                       <el-option
-                        v-for="facility in facilitys"
+                        v-for="facility in facilitysOptions"
                         :key="facility.id"
-                        :label="facility.name"
+                        :label="facility.name + ': ' + facility.description"
                         :value="facility.id">
                       </el-option>
                     </el-select>
                   </el-form-item>
                   <el-form-item label="arrival" :label-width="formLabelWidth">
-                    <el-select v-model="navigateForm.arrival" filterable placeholder="please select arrival">
+                    <el-select v-model="navigateForm.arrival" filterable remote reserve-keyword :remote-method="searchFacilitys" placeholder="please select arrival">
                       <el-option
-                        v-for="facility in facilitys"
+                        v-for="facility in facilitysOptions"
                         :key="facility.id"
-                        :label="facility.name"
+                        :label="facility.name + ': ' + facility.description"
                         :value="facility.id">
                       </el-option>
                     </el-select>
@@ -359,6 +359,7 @@ export default {
       currentTime: 0,
       posisiontNow: 0,
       buptCampusValue: 0,
+      facilitysOptions: [],
       setNavigateFormVisible: false,
       addDialogFormVisible: false,
       addTravelersPlansVisible: false,
@@ -436,6 +437,22 @@ export default {
     }
   },
   methods: {
+    searchFacilitys(query) {
+      if (query !== '') {
+        this.$axios.get(`/api/facilitys?description=${query}`)// !
+        .then(res => {
+          this.facilitysOptions = res.data.data
+          console.log('&&&&&&&&')
+          console.log(this.facilitysOptions)
+        })
+        .catch(err => {
+          console.log('error', err)
+        })
+      }
+      else {
+        this.facilitysOptions = this.facilitys;
+      }
+    },
     removePathpoint(item) {
       var index = this.navigateForm.strategy.pathpoints.indexOf(item)
       if (index !== -1) {

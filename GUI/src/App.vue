@@ -25,7 +25,7 @@
               <el-button @click="addFacilityFormVisible = true" type="primary" icon="el-icon-circle-plus-outline">add facility</el-button>
               <el-button @click="addRoadFormVisible = true" type="primary" icon="el-icon-circle-plus-outline">add road</el-button>
               <el-dialog title="navigate" :visible.sync="setNavigateFormVisible">
-                <el-form :model="form">
+                <el-form :model="navigateForm">
                   <el-form-item label="departure" :label-width="formLabelWidth">
                     <el-input v-model="navigateForm.departure" autocomplete="off"></el-input>
                   </el-form-item>
@@ -33,7 +33,25 @@
                     <el-input v-model="navigateForm.arrival" autocomplete="off"></el-input>
                   </el-form-item>
                   <el-form-item label="strategy" :label-width="formLabelWidth">
-                    <el-input v-model="navigateForm.strategy" autocomplete="off"></el-input>
+                    <el-select v-model="navigateForm.strategy.strategy" placeholder="Please select strategy">
+                      <el-option v-for="item in strategyOptions" :key="item.value" :label="item.label" :value="item.value"></el-option>
+                    </el-select>
+                  </el-form-item>
+                  <el-form-item
+                    v-if="navigateForm.strategy.strategy == '2'"
+                    :label-width="formLabelWidth"
+                    v-for="(pathpoint, index) in navigateForm.strategy.pathpoints"
+                    :label="'pathpoint ' + index"
+                    :key="pathpoint.key"
+                    :prop="'pathpoints.' + index + '.value'"
+                    :rules="{
+                      required: true, message: 'pathpoint can\'t be empty', trigger: 'blur'
+                    }"
+                  >
+                    <el-input v-model="pathpoint.value"></el-input><el-button @click.prevent="removePathpoint(pathpoint)">delete</el-button>
+                  </el-form-item>
+                  <el-form-item v-if="navigateForm.strategy.strategy == '2'" :label-width="formLabelWidth">
+                    <el-button @click="addPathpoint">new pathpoint</el-button>
                   </el-form-item>
                 </el-form>
                 <div slot="footer" class="dialog-footer">
@@ -340,7 +358,14 @@ export default {
       addFacilityFormVisible: false,
       addRoadFormVisible: false,
       formLabelWidth: '120px',
-      navigateForm: { departure: '', arrival: '', strategy: '' },
+      navigateForm: { departure: '', arrival: '', 
+        strategy: {
+          strategy: '',
+          pathpoints: [{
+              value: ''
+          }]
+        }
+      },
       facilityForm: { name: '', type: '', description: '', position: '' },
       roadForm: { type: '', departure: '', arrival: '', efficiency: '' },
       travelersPlansForm: { id: '', requestTime: '', departure: '', arrival: '', plan: '' },
@@ -356,6 +381,19 @@ export default {
       travelersStatus: [],
       travelersPlans: [],
       log: [],
+      strategyOptions: [{
+          value: '0',
+          label: '最短距离策略'
+        }, {
+          value: '1',
+          label: '最短时间策略'
+        }, {
+          value: '2',
+          label: '途径最短距离策略'
+        }, {
+          value: '3',
+          label: '交通工具的最短时间策略'
+        }],
     }
   },
   computed: {
@@ -385,6 +423,18 @@ export default {
     },
   },
   methods: {
+    removePathpoint(item) {
+      var index = this.navigateForm.strategy.pathpoints.indexOf(item)
+      if (index !== -1) {
+        this.navigateForm.strategy.pathpoints.splice(index, 1)
+      }
+    },
+    addPathpoint() {
+      this.navigateForm.strategy.pathpoints.push({
+        value: '',
+        key: Date.now()
+      });
+    },
     setNavigate() {
       this.$axios.post(`/api/plan?startid=${this.navigateForm.departure}&endid=${this.navigateForm.arrival}&type=${this.navigateForm.strategy}`)
         .then(res => {

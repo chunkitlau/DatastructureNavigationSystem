@@ -283,6 +283,8 @@ var buptCampus = new ol.View({
 var buptCampusValue = 0;
 var buptCampusView = [buptMainCampus, buptShaheCampus, buptCampus];
 
+var mapView = buptCampusView[buptCampusValue];
+
 // ol样式
 var styles = {
   'route': new ol.style.Style({
@@ -347,8 +349,9 @@ var routeLayer=new ol.layer.Vector({
 });
 
 var isPlay = false, isInitAnimation = false;
-var deltaTtime = 500;
+var deltaTtime = 25.0;
 var polyline = null;
+var pathWeight = [], pathWeightSum =[];
 
 export default {
   name: 'App',
@@ -449,6 +452,7 @@ export default {
       });
     },
     setNavigate() {
+      this.currentTime=0.;
       if (this.posisiontNow) {
         this.posisiontNow = 0;
       }
@@ -585,71 +589,58 @@ export default {
     },
     displayData() {
       sourceFeatures.clear();
-      this.$axios.get('/api/facilitys')
-      .then(res => {
-        dotTable=res.data.data;
-        for(var i in dotTable){
-          var feature=new ol.Feature({
-            geometry: new ol.geom.Point(transform(Object.values(dotTable[i].location),'EPSG:4326','EPSG:3857')),
-            name: dotTable[i].id
-          });
-          feature.setStyle(new ol.style.Style({
-            image: new ol.style.Circle({
-              radius: 6,
-              fill: new ol.style.Fill({ color: 'rgba(255,255,255,1)' }),
-              stroke: new ol.style.Stroke({ color: 'rgba(0,0,0,1)' })
-            }),
-            text: new ol.style.Text({
-              text: dotTable[i].id,
-              fill: new ol.style.Fill({color: '#000'}),
-              textAlign: 'left',
-              offsetX: 10
-            })
-          }));
-          sourceFeatures.addFeatures([feature]);
-        }
-      }).then(res => {
-        // 将数据库中的所有边显示在地图上
-        this.$axios.get('/api/roads')
-          .then(res => {
-            var edgeColor=['#333399','#ff9900','#009900','#cc0000'];
-            edgeTable=res.data.data;
-            for(var i in edgeTable){
-              var fromLoc=dotTable.find(o => o.id === edgeTable[i].fromid).location;
-              var toLoc=dotTable.find(o => o.id === edgeTable[i].toid).location;
-              var points=new Array(
-                trans(fromLoc),trans(toLoc)
-              );
-              var line=new ol.geom.LineString(points);
-              var layerEdge = new ol.layer.Vector({
-                source: new ol.source.Vector({
-                  features: [
-                    new ol.Feature({ geometry: line })
-                  ]
-                }),
-                style: [
-                  new ol.style.Style({
-                    stroke: new ol.style.Stroke({
-                      width: 3,
-                      color: edgeColor[edgeTable[i].type],
-                      lineDash: [.1, 5]
-                    }),
-                    text: new ol.style.Text({
-                      font: '16px sans-serif',
-                      text: edgeTable[i].id,
-                      fill: new ol.style.Fill({color: '#000'})
-                    })
-                  })
-                ]
-              });
-              map.addLayer(layerEdge);
-            }
-          }).catch(err => {
-            console.log(err);
+      
+      for(var i in dotTable){
+        var feature=new ol.Feature({
+          geometry: new ol.geom.Point(transform(Object.values(dotTable[i].location),'EPSG:4326','EPSG:3857')),
+          name: dotTable[i].id
+        });
+        feature.setStyle(new ol.style.Style({
+          image: new ol.style.Circle({
+            radius: 6,
+            fill: new ol.style.Fill({ color: 'rgba(255,255,255,1)' }),
+            stroke: new ol.style.Stroke({ color: 'rgba(0,0,0,1)' })
+          }),
+          text: new ol.style.Text({
+            text: dotTable[i].id,
+            fill: new ol.style.Fill({color: '#000'}),
+            textAlign: 'left',
+            offsetX: 10
           })
-      }).catch(err => {
-        console.log(err);
-      });
+        }));
+        sourceFeatures.addFeatures([feature]);
+      }
+      var edgeColor=['#333399','#ff9900','#009900','#cc0000'];
+      for(var i in edgeTable){
+        var fromLoc=dotTable.find(o => o.id === edgeTable[i].fromid).location;
+        var toLoc=dotTable.find(o => o.id === edgeTable[i].toid).location;
+        var points=new Array(
+          trans(fromLoc),trans(toLoc)
+        );
+        var line=new ol.geom.LineString(points);
+        var layerEdge = new ol.layer.Vector({
+          source: new ol.source.Vector({
+            features: [
+              new ol.Feature({ geometry: line })
+            ]
+          }),
+          style: [
+            new ol.style.Style({
+              stroke: new ol.style.Stroke({
+                width: 3,
+                color: edgeColor[edgeTable[i].type],
+                lineDash: [.1, 5]
+              }),
+              text: new ol.style.Text({
+                font: '16px sans-serif',
+                text: edgeTable[i].id,
+                fill: new ol.style.Fill({color: '#000'})
+              })
+            })
+          ]
+        });
+        map.addLayer(layerEdge);
+      }
     },
     getNearby(location, distance) {
       let string = ''
@@ -670,12 +661,19 @@ export default {
       this.$axios.post(`/api/plan?startid=${this.navigateForm.departure}&endid=${this.navigateForm.arrival}&type=${this.navigateForm.strategy.strategy}`, this.navigateForm.strategy.pathpoints)
         .then(res => {
           lineString.setCoordinates([]);
+          pathWeight=[];
+          pathWeightSum=[0.];
           this.routeData=res.data.data;
-          console.log(this.routeData)
+          // console.log(this.routeData)
           polyline=new Array(trans(dotTable.find(o=>o.id===this.routeData.path[0].fromid).location));
           for(var i in this.routeData.path){
+            pathWeight.push(this.routeData.path[i].dist);
+            pathWeightSum.push(pathWeightSum[i]+pathWeight[i]);
             polyline.push(trans(dotTable.find(o=>o.id===this.routeData.path[i].toid).location));
           }
+          // console.log(polyline);
+          // console.log(pathWeight);
+          // console.log(pathWeightSum);
           startMarker.setGeometry(new ol.geom.Point(polyline[0]));
           startMarker.setStyle(styles['icon']);
           marker.setPosition(polyline[0]);
@@ -686,6 +684,8 @@ export default {
           routeFeature.setStyle(styles['route']);
           lineStringFeature.setGeometry(lineString);
           lineStringFeature.setStyle(styles['route1']);
+          mapView.setZoom(18.0);
+          mapView.setCenter(polyline[0]);
         })
         .catch(err => {
           console.log('error', err)
@@ -716,10 +716,27 @@ export default {
     }, 2000)
   },
   mounted() {
+    // 从数据库获取数据并保存
+    this.$axios.get('/api/facilitys').then(res => {
+      dotTable=res.data.data;
+      }).then(res => {
+        // 将数据库中的所有边显示在地图上
+        this.$axios.get('/api/roads').then(res => {
+          edgeTable=res.data.data;
+          }).then(res => {
+            // 默认不显示数据库信息，如有需要请取消下行注释
+            // this.displayData();
+          }).catch(err=>{
+            console.log(err);
+          })
+      }).catch(res =>{
+        console.log(err);
+      });
+
     // 地图对象，有layerRoute和layerFeatures层
     map = new ol.Map({
       target: 'map',
-      view: buptCampusView[buptCampusValue],
+      view: mapView,
       renderer: 'canvas',
       layers: [
         new ol.layer.Tile({
@@ -759,9 +776,6 @@ export default {
       });
       $(element).popover('show');
     });
-
-    // 将数据库中的所有点显示在地图上
-    this.displayData();
     
     markerEl = document.getElementById('geo-marker');
     marker = new ol.Overlay({
@@ -774,10 +788,22 @@ export default {
     //fire the animation
     var animation = function () {
       if (polyline != null && self.posisiontNow < polyline.length && isPlay) {
-        self.posisiontNow++;
-        lineString.setCoordinates(polyline.slice(0,self.posisiontNow+1));
-        marker.setPosition(polyline[self.posisiontNow]);
-        self.currentTime += deltaTtime / 1000.0 * 6;
+        while(self.currentTime>pathWeightSum[self.posisiontNow+1]){
+          self.posisiontNow++;
+        }
+        var displayLine=polyline.slice(0,self.posisiontNow+1);
+        var internalTime=self.currentTime-pathWeightSum[self.posisiontNow];
+        // console.log(internalTime);
+        var internalMarker=[
+          polyline[self.posisiontNow][0]+(polyline[self.posisiontNow+1][0]-polyline[self.posisiontNow][0])*internalTime/pathWeight[self.posisiontNow],
+          polyline[self.posisiontNow][1]+(polyline[self.posisiontNow+1][1]-polyline[self.posisiontNow][1])*internalTime/pathWeight[self.posisiontNow]
+        ];
+        displayLine.push(internalMarker);
+        // console.log(internalMarker);
+        lineString.setCoordinates(displayLine);
+        marker.setPosition(internalMarker);
+        mapView.setCenter(internalMarker);
+        self.currentTime += deltaTtime / 1000.0 * 6 * 5;
         /* currentTime is 6 times of deltaTtime. 
           * deltaTtime measures by ms, currentTime measures by second.
           * real deltaTtime goes 10s correspond to simulation system currentTime 1min.

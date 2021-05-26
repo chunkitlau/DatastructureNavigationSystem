@@ -6,6 +6,7 @@ import router from './router'
 import ElementUI from 'element-ui'
 import 'element-ui/lib/theme-chalk/index.css'
 import Axios from 'axios'
+import qs from 'qs'
 import VueAMap from 'vue-amap'
 import VueResource from 'vue-resource'
 
@@ -40,6 +41,10 @@ VueAMap.initAMapApiLoader({
 // Axios
 // Axios.defaults.baseURL = '/api'
 Vue.prototype.$axios = Axios
+//
+
+// qs
+Vue.prototype.$qs = qs
 //
 
 //

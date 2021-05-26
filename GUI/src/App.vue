@@ -37,8 +37,8 @@
                       <el-option v-for="item in strategyOptions" :key="item.value" :label="item.label" :value="item.value"></el-option>
                     </el-select>
                   </el-form-item>
-                  <el-form-item
-                    v-if="navigateForm.strategy.strategy == '2'"
+                  <div v-if="navigateForm.strategy.strategy == '2'">
+                    <el-form-item
                     :label-width="formLabelWidth"
                     v-for="(pathpoint, index) in navigateForm.strategy.pathpoints"
                     :label="'pathpoint ' + index"
@@ -50,9 +50,10 @@
                   >
                     <el-input v-model="pathpoint.value"></el-input><el-button @click.prevent="removePathpoint(pathpoint)">delete</el-button>
                   </el-form-item>
-                  <el-form-item v-if="navigateForm.strategy.strategy == '2'" :label-width="formLabelWidth">
+                  <el-form-item :label-width="formLabelWidth">
                     <el-button @click="addPathpoint">new pathpoint</el-button>
                   </el-form-item>
+                  </div>
                 </el-form>
                 <div slot="footer" class="dialog-footer">
                   <el-button @click="setNavigateFormVisible = false">cancel</el-button>
@@ -436,7 +437,7 @@ export default {
       });
     },
     setNavigate() {
-      this.$axios.post(`/api/plan?startid=${this.navigateForm.departure}&endid=${this.navigateForm.arrival}&type=${this.navigateForm.strategy}`)
+      this.$axios.post(`/api/plan?startid=${this.navigateForm.departure}&endid=${this.navigateForm.arrival}&type=${this.navigateForm.strategy.strategy}`, this.navigateForm.strategy.pathpoints)
         .then(res => {
           console.log(res)
           if (this.posisiontNow) {

@@ -17,14 +17,7 @@
           <el-main height="80%">
             <span>Current time: {{ Math.floor(currentTime / 3600) }} hour {{ Math.floor(currentTime / 60) }} minute {{ currentTime }} second</span><br>
             <span>Current position: id = {{ currentPositionID }} name = {{ currentPositionName }} </span>
-            <el-switch
-                style="display: block"
-                v-model="buptCampusValue"
-                active-color="#13ce66"
-                inactive-color="#409EFF"
-                active-text="buptShaheCampus"
-                inactive-text="buptMainCampus">
-              </el-switch>
+            <el-switch style="display: block" v-model="buptCampusValue" active-color="#13ce66" inactive-color="#409EFF" active-text="buptShaheCampus" inactive-text="buptMainCampus"></el-switch>
             <el-button-group>
               <el-button @click="handlePlay" type="success" icon="el-icon-video-play">play</el-button>
               <el-button @click="handlePause" type="warning" icon="el-icon-video-pause">pause</el-button>
@@ -35,23 +28,13 @@
               <el-dialog title="navigate" :visible.sync="setNavigateFormVisible">
                 <el-form :model="navigateForm">
                   <el-form-item label="departure" :label-width="formLabelWidth">
-                    <el-select v-model="navigateForm.departure" filterable placeholder="please select departure">
-                      <el-option
-                        v-for="facility in facilitys"
-                        :key="facility.id"
-                        :label="facility.name"
-                        :value="facility.id">
-                      </el-option>
+                    <el-select v-model="navigateForm.departure" filterable remote reserve-keyword :remote-method="searchFacilitys" placeholder="please select departure">
+                      <el-option v-for="facility in facilitysOptions" :key="facility.id" :label="facility.name + ': ' + facility.description" :value="facility.id"></el-option>
                     </el-select>
                   </el-form-item>
                   <el-form-item label="arrival" :label-width="formLabelWidth">
-                    <el-select v-model="navigateForm.arrival" filterable placeholder="please select arrival">
-                      <el-option
-                        v-for="facility in facilitys"
-                        :key="facility.id"
-                        :label="facility.name"
-                        :value="facility.id">
-                      </el-option>
+                    <el-select v-model="navigateForm.arrival" filterable remote reserve-keyword :remote-method="searchFacilitys" placeholder="please select arrival">
+                      <el-option v-for="facility in facilitysOptions" :key="facility.id" :label="facility.name + ': ' + facility.description" :value="facility.id"></el-option>
                     </el-select>
                   </el-form-item>
                   <el-form-item label="strategy" :label-width="formLabelWidth">
@@ -67,7 +50,10 @@
                       :key="pathpoint.key"
                       :prop="'pathpoints.' + index + '.value'"
                       :rules="{required: true, message: 'pathpoint can\'t be empty', trigger: 'blur'}">
-                    <el-input v-model="pathpoint.value"></el-input><el-button @click.prevent="removePathpoint(pathpoint)">delete</el-button>
+                    <el-select v-model="pathpoint.value" filterable remote reserve-keyword :remote-method="searchFacilitys" placeholder="please select pathpoint">
+                      <el-option v-for="facility in facilitysOptions" :key="facility.id" :label="facility.name + ': ' + facility.description" :value="facility.id"></el-option>
+                    </el-select>
+                    <el-button @click.prevent="removePathpoint(pathpoint)">delete</el-button>
                   </el-form-item>
                   <el-form-item :label-width="formLabelWidth">
                     <el-button @click="addPathpoint">new pathpoint</el-button>
@@ -77,36 +63,6 @@
                 <div slot="footer" class="dialog-footer">
                   <el-button @click="setNavigateFormVisible = false">cancel</el-button>
                   <el-button type="primary" @click="setNavigateFormVisible = false, setNavigate()">confirm</el-button>
-                </div>
-              </el-dialog>
-              <el-dialog title="adding vehicles timetable" :visible.sync="addVehiclesTimetableVisible">
-                <el-form :model="form">
-                  <el-form-item label="number" :label-width="formLabelWidth">
-                    <el-input v-model="vehiclesTimetableForm.number" autocomplete="off"></el-input>
-                  </el-form-item>
-                  <el-form-item label="type" :label-width="formLabelWidth">
-                    <el-input v-model="vehiclesTimetableForm.type" autocomplete="off"></el-input>
-                  </el-form-item>
-                  <el-form-item label="departure" :label-width="formLabelWidth">
-                    <el-input v-model="vehiclesTimetableForm.departure" autocomplete="off"></el-input>
-                  </el-form-item>
-                  <el-form-item label="departure time" :label-width="formLabelWidth">
-                    <el-input v-model="vehiclesTimetableForm.departureTime" autocomplete="off"></el-input>
-                  </el-form-item>
-                  <el-form-item label="arrival" :label-width="formLabelWidth">
-                    <el-input v-model="vehiclesTimetableForm.arrival" autocomplete="off"></el-input>
-                  </el-form-item>
-                  <el-form-item label="arrival time" :label-width="formLabelWidth">
-                    <el-input v-model="vehiclesTimetableForm.arrivalTime" autocomplete="off"></el-input>
-                  </el-form-item>
-                  <el-form-item label="risk" :label-width="formLabelWidth">
-                    <el-input v-model="vehiclesTimetableForm.risk" autocomplete="off"></el-input>
-                  </el-form-item>
-                </el-form>
-                <div slot="footer" class="dialog-footer">
-                  <el-button @click="addVehiclesTimetableVisible = false, addDialogFormVisible = true">back</el-button>
-                  <el-button @click="addVehiclesTimetableVisible = false">cancel</el-button>
-                  <el-button type="primary" @click="addVehiclesTimetableVisible = false, addVehiclesTimetable()">confirm</el-button>
                 </div>
               </el-dialog>
               <el-dialog title="adding facility" :visible.sync="addFacilityFormVisible">
@@ -153,25 +109,22 @@
               <el-tab-pane label="nearby">
                 <el-table :data="nearby" height="500" stripe style="width: 100%">
                   <el-table-column prop="dist" label="dist" width="60"></el-table-column>
-                  <el-table-column prop="id" label="id" width="60"></el-table-column>
-                  <el-table-column prop="name" label="name" width="60"></el-table-column>
+                  <el-table-column prop="name" label="name" width="120"></el-table-column>
                   <el-table-column prop="type" label="type" width="60"></el-table-column>
-                  <el-table-column prop="description" label="description" width="120"></el-table-column>
+                  <el-table-column prop="description" label="description" width="240"></el-table-column>
                 </el-table>
               </el-tab-pane>
               <el-tab-pane label="travel plan">
-                <el-table :data="routeData.path" height="500" stripe style="width: 100%">
-                  <el-table-column prop="id" label="id" width="60"></el-table-column>
-                  <el-table-column prop="fromid" label="fromid" width="90"></el-table-column>
-                  <el-table-column prop="toid" label="toid" width="60"></el-table-column>
+                <el-table :data="routeData" height="500" stripe style="width: 100%">
+                  <el-table-column prop="fromname" label="from" width="120"></el-table-column>
+                  <el-table-column prop="toname" label="to" width="120"></el-table-column>
                   <el-table-column prop="type" label="type" width="60"></el-table-column>
-                  <el-table-column prop="efficiency" label="efficiency" width="90"></el-table-column>
+                  <el-table-column prop="efficiency" label="efficiency" width="120"></el-table-column>
                 </el-table>
               </el-tab-pane>
               <el-tab-pane label="facilitys">
                 <el-table :data="facilitys" height="500" stripe style="width: 100%">
-                  <el-table-column prop="id" label="id" width="60"></el-table-column>
-                  <el-table-column prop="name" label="name" width="60"></el-table-column>
+                  <el-table-column prop="name" label="name" width="120"></el-table-column>
                   <el-table-column prop="type" label="type" width="60"></el-table-column>
                   <!--
                   <el-table-column prop="location" label="location" width="120"></el-table-column>
@@ -187,10 +140,9 @@
               </el-tab-pane>
               <el-tab-pane label="paths">
                 <el-table :data="paths" height="500" stripe style="width: 100%">
-                  <el-table-column prop="id" label="id" width="60"></el-table-column>
                   <el-table-column prop="type" label="type" width="60"></el-table-column>
-                  <el-table-column prop="fromid" label="fromid" width="90"></el-table-column>
-                  <el-table-column prop="toid" label="toid" width="90"></el-table-column>
+                  <el-table-column prop="fromname" label="from" width="120"></el-table-column>
+                  <el-table-column prop="toname" label="to" width="120"></el-table-column>
                   <el-table-column prop="efficiency" label="efficiency" width="90"></el-table-column>
                   <!--
                   <el-table-column prop="" label="length" width="90"></el-table-column>
@@ -227,7 +179,7 @@
             -->
           </el-main>
           <el-footer height="10%">
-            Copyright © 2021 - present Chunkit Lau; all rights reserved
+            Copyright © 2021 - present Chunkit Lau, Jijun Chi, Hanyan Yin; all rights reserved
           </el-footer>
         </el-container>
       </el-aside>
@@ -362,6 +314,7 @@ export default {
       currentTime: 0,
       posisiontNow: 0,
       buptCampusValue: 0,
+      facilitysOptions: [],
       setNavigateFormVisible: false,
       addDialogFormVisible: false,
       addTravelersPlansVisible: false,
@@ -385,7 +338,7 @@ export default {
       facilitys: [],
       paths: [],
       nearby: [],
-      routeData: { path: [{fromid: 0}] },
+      routeData: [{fromid: 0}],
       vehiclesTimetable: [],
       travelersStatus: [],
       travelersPlans: [],
@@ -408,7 +361,7 @@ export default {
   computed: {
     currentPosition: function () {
       try {
-        return this.facilitys.find(element => element.id == this.routeData.path[this.posisiontNow].fromid);
+        return this.facilitys.find(element => element.id == this.routeData[this.posisiontNow].fromid);
       }
       catch (err){
         return null;
@@ -439,6 +392,20 @@ export default {
     }
   },
   methods: {
+    searchFacilitys(query) {
+      if (query !== '') {
+        this.$axios.get(`/api/facilitys?description=${query}`)// !
+        .then(res => {
+          this.facilitysOptions = res.data.data
+        })
+        .catch(err => {
+          console.log('error', err)
+        })
+      }
+      else {
+        this.facilitysOptions = this.facilitys;
+      }
+    },
     removePathpoint(item) {
       var index = this.navigateForm.strategy.pathpoints.indexOf(item)
       if (index !== -1) {
@@ -475,9 +442,7 @@ export default {
         })
     },
     addFacility() {
-      console.log(lastclick[lastclickp]);
       this.facilityForm.position = lastclick[lastclickp]
-      console.log(this.facilityForm)
       this.$axios.post(`/api/facility?name=${this.facilityForm.name}&type=${this.facilityForm.type}&position=${this.facilityForm.position}&description=${this.facilityForm.description}`)// !
         .then(res => {
           this.citiesRiskForm = {}
@@ -510,13 +475,16 @@ export default {
       this.$axios.get('/api/roads')// !
         .then(res => {
           this.paths = res.data.data
+          for (let index=0,len=this.paths.length; index<len; ++index) {
+            this.paths[index].fromname = this.facilitys.find(item=>item.id===this.paths[index].fromid).name
+            this.paths[index].toname = this.facilitys.find(item=>item.id===this.paths[index].toid).name
+          }
         })
         .catch(err => {
           console.log('error', err)
         })
     },
     addRoad() {
-      console.log(this.roadForm)
       this.$axios.post(`/api/road?type=${this.roadForm.type}&fromid=${this.roadForm.fromid}&toid=${this.roadForm.toid}&efficiency=${this.roadForm.efficiency}`)// !
         .then(res => {
           this.citiesRiskForm = {}
@@ -663,17 +631,17 @@ export default {
           lineString.setCoordinates([]);
           pathWeight=[];
           pathWeightSum=[0.];
-          this.routeData=res.data.data;
-          // console.log(this.routeData)
-          polyline=new Array(trans(dotTable.find(o=>o.id===this.routeData.path[0].fromid).location));
-          for(var i in this.routeData.path){
-            pathWeight.push(this.routeData.path[i].dist);
-            pathWeightSum.push(pathWeightSum[i]+pathWeight[i]);
-            polyline.push(trans(dotTable.find(o=>o.id===this.routeData.path[i].toid).location));
+          this.routeData=res.data.data.path;
+          for (let index=0,len=this.routeData.length; index<len; ++index) {
+            this.routeData[index].fromname = this.facilitys.find(item=>item.id===this.routeData[index].fromid).name
+            this.routeData[index].toname = this.facilitys.find(item=>item.id===this.routeData[index].toid).name
           }
-          // console.log(polyline);
-          // console.log(pathWeight);
-          // console.log(pathWeightSum);
+          polyline=new Array(trans(dotTable.find(o=>o.id===this.routeData[0].fromid).location));
+          for(var i in this.routeData){
+            polyline.push(trans(dotTable.find(o=>o.id===this.routeData[i].toid).location));
+            pathWeight.push(this.routeData[i].dist);
+            pathWeightSum.push(pathWeightSum[i]+pathWeight[i]);
+          }
           startMarker.setGeometry(new ol.geom.Point(polyline[0]));
           startMarker.setStyle(styles['icon']);
           marker.setPosition(polyline[0]);
@@ -686,10 +654,9 @@ export default {
           lineStringFeature.setStyle(styles['route1']);
           mapView.setZoom(18.0);
           mapView.setCenter(polyline[0]);
-        })
-        .catch(err => {
+        }).catch(err => {
           console.log('error', err)
-        })
+        });
     },
     handlePlay() {
       isPlay = true;
@@ -793,13 +760,11 @@ export default {
         }
         var displayLine=polyline.slice(0,self.posisiontNow+1);
         var internalTime=self.currentTime-pathWeightSum[self.posisiontNow];
-        // console.log(internalTime);
         var internalMarker=[
           polyline[self.posisiontNow][0]+(polyline[self.posisiontNow+1][0]-polyline[self.posisiontNow][0])*internalTime/pathWeight[self.posisiontNow],
           polyline[self.posisiontNow][1]+(polyline[self.posisiontNow+1][1]-polyline[self.posisiontNow][1])*internalTime/pathWeight[self.posisiontNow]
         ];
         displayLine.push(internalMarker);
-        // console.log(internalMarker);
         lineString.setCoordinates(displayLine);
         marker.setPosition(internalMarker);
         mapView.setCenter(internalMarker);

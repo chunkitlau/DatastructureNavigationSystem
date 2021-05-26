@@ -1,9 +1,9 @@
 const xss = require('xss')
 const { exec } = require('../database/mysql')
-const { START_TIME, FRESH_TIME } = require('../config/constants')
+const { START_TIME, FRESH_TIME, START_INDEX } = require('../config/constants')
 
 var currentState = 1
-var currentTime = START_TIME[0]
+var currentTime = START_TIME[START_INDEX]
 
 const clock = status => {
   if (status === 1) {

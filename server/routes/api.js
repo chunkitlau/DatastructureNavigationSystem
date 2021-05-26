@@ -24,6 +24,7 @@ const {
 } = require('../controller/utils')
 const { SuccessModel, ErrorModel } = require('../model/resModel')
 const { getShortestPath, getPassbyShortestPath } = require('../controller/model.js')
+const { SBplans } = require('../config/schoolBusTimetable')
 
 /* GET api listing. */
 router.get('/', function (req, res, next) {
@@ -42,6 +43,7 @@ router.get('/', function (req, res, next) {
     post   /plan?startid=&endid=&type=<br>
     get    /current/time<br>
     get    /current/state<br>
+    get    /schoolbus/timetable<br>
 
     get    /vehicles/timetable<br>
     post   /vehicles/timetable<br>
@@ -135,10 +137,11 @@ router.post('/road', function (req, res, next) {
 })
 
 router.post('/plan', function (req, res, next) {
-  const startid = req.query.startid
-  const endid = req.query.endid
-  const type = req.query.type
-  const passby = req.query.passby || null
+  const startid = parseInt(req.query.startid)
+  const endid = parseInt(req.query.endid)
+  const type = parseInt(req.query.type)
+  const passby = req.body || null
+  if (passby != null) for (let i = 0; i < passby.length; i++) passby[i] = parseInt(passby[i].value)
   var result
   if (type == 2) result = getPassbyShortestPath(startid, endid, passby)
   else result = getShortestPath(startid, endid, type)
@@ -154,6 +157,11 @@ router.get('/current/time', function (req, res, next) {
 
 router.get('/currnet/state', function (req, res, next) {
   const result = getCurrentState()
+  res.json(new SuccessModel(result))
+})
+
+router.get('/schoolbus/timetable', function (req, res, nex) {
+  const result = SBplans
   res.json(new SuccessModel(result))
 })
 

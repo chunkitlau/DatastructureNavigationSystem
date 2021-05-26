@@ -1,4 +1,5 @@
 // Choose a time for backend start time.
+const START_INDEX = 0
 const START_TIME = [
   {
     hour: 8,
@@ -29,6 +30,7 @@ const DEFAULT_RADIUS = 6371008.8
 const SPEED = [1.4, 4.2, 8.4, 13.9]
 
 module.exports = {
+  START_INDEX,
   START_TIME,
   FRESH_TIME,
   DIST_BETWEEN_CAMPUS,

@@ -28,14 +28,19 @@ const updateFacility = (id, name, type, description) => {
 
 const getFacilitys = desc => {
   var sql
-  if (desc == '') sql = `select * from dottable`
+  if (desc == '') sql = `select * from dottable where type != 0`
   else
     sql = `select * from dottable where name REGEXP '${desc}' and type != 0 union select * from dottable where description REGEXP '${desc}' and type != 0;`
   return exec(sql)
 }
 
 const getFacilitysAround = (nowlocation, distance) => {
-  const sql = `select *, ST_Distance_sphere(Point(${nowlocation}), location) as dist FROM dottable having dist < ${distance} ORDER BY dist;`
+  const sql = `select *, ST_Distance_sphere(Point(${nowlocation}), location) as dist FROM dottable having dist < ${distance} and type != 0 ORDER BY dist;`
+  return exec(sql)
+}
+
+const getFacilitysAll = () => {
+  const sql = `select * from dottable`
   return exec(sql)
 }
 
@@ -129,6 +134,7 @@ module.exports = {
   updateFacility,
   getFacilitys,
   getFacilitysAround,
+  getFacilitysAll,
   deleteFacility,
   createRoad,
   getRoad,

@@ -123,7 +123,7 @@
                 </el-table>
               </el-tab-pane>
               <el-tab-pane label="facilitys">
-                <el-table :data="facilitys" height="500" stripe style="width: 100%">
+                <el-table :data="facilityswithouttype0" height="500" stripe style="width: 100%">
                   <el-table-column prop="name" label="name" width="120"></el-table-column>
                   <el-table-column prop="type" label="type" width="60"></el-table-column>
                   <!--
@@ -336,6 +336,7 @@ export default {
       vehiclesTimetableForm: { number: '', type: '', departure: '', departureTime: '', arrival: '', arrivalTime: '', risk: '' },
       form: {},
       facilitys: [],
+      facilityswithouttype0: [],
       paths: [],
       nearby: [],
       routeData: [{fromid: 0}],
@@ -432,10 +433,18 @@ export default {
       isPlay = false;
     },
     getFacilitys() {
-      this.$axios.get('/api/facilitys')// !
+      this.$axios.get('/api/facilitys/all')// !
         .then(res => {
           this.facilitys = res.data.data
-          //this.facilitys = 
+        })
+        .catch(err => {
+          console.log('error', err)
+        })
+    },
+    getFacilitysWithoutType0() {
+      this.$axios.get('/api/facilitys')// !
+        .then(res => {
+          this.facilityswithouttype0 = res.data.data
         })
         .catch(err => {
           console.log('error', err)
@@ -552,6 +561,7 @@ export default {
     },
     getAllData() {
       this.getFacilitys()
+      this.getFacilitysWithoutType0()
       this.getPaths()
       //this.getVehiclesTimetable()
     },
@@ -684,8 +694,9 @@ export default {
   },
   mounted() {
     // 从数据库获取数据并保存
-    this.$axios.get('/api/facilitys').then(res => {
+    this.$axios.get('/api/facilitys/all').then(res => {
       dotTable=res.data.data;
+      console.log(dotTable)
       }).then(res => {
         // 将数据库中的所有边显示在地图上
         this.$axios.get('/api/roads').then(res => {

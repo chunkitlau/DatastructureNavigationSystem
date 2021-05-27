@@ -242,8 +242,8 @@ const Dijkstra = (startDotID, endDotID, strategy) => {
  * @returns 0: needn't across, -1: Main -> ShaHe, 1: ShaHe -> Main
  */
 const across = (startDotID, endDotID) => {
-  const dist = Dist(dots[startDotID], dots[endDotID])
-  const dist1 = Dist(dots[startDotID], dots[0]) //
+  const dist = Dist(dots[mapDot[startDotID]], dots[mapDot[endDotID]])
+  const dist1 = Dist(dots[mapDot[startDotID]], dots[0]) //
   return dist < DIST_BETWEEN_CAMPUS ? 0 : dist1 < DIST_BETWEEN_CAMPUS ? 1 : -1
 }
 
@@ -310,6 +310,9 @@ const getShortestPath = (startDotID, endDotID, strategy) => {
     if (DEBUG) console.log(`Running ShortestPath.`)
     const dijInit = Dijkstra_initial()
     dijInit.then(() => {
+      console.log(startDotID, endDotID, strategy);
+      console.log(dots[mapDot[startDotID]]);
+      console.log(dots[mapDot[endDotID]]);
       var result
       var crossFlag = across(startDotID, endDotID)
       if (crossFlag) {

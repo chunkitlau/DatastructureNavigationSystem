@@ -8,6 +8,7 @@ const {
   updateFacility,
   getFacilitys,
   getFacilitysAround,
+  getFacilitysAll,
   deleteFacility,
   createRoad,
   getRoad,
@@ -36,6 +37,7 @@ router.get('/', function (req, res, next) {
     get    /facility<br>
     put    /facility?id=&name=&type=&description=<br>
     get    /facilitys/around?distance=<br>
+    get    /facilitys/all<br>
     delete /facility?id=<br>
     post   /road?type=&fromid=&toid=&efficiency=<br>
     get    /roads<br>
@@ -44,6 +46,7 @@ router.get('/', function (req, res, next) {
     get    /current/time<br>
     get    /current/state<br>
     get    /schoolbus/timetable<br>
+    
 
     get    /vehicles/timetable<br>
     post   /vehicles/timetable<br>
@@ -75,6 +78,13 @@ router.get('/facilitys/around', function (req, res, next) {
   const result = getFacilitysAround(nowlocation, distance)
   return result.then(result => {
     for (var i = 0; i < result.length; i++) result[i].dist = result[i].dist.toFixed(2)
+    res.json(new SuccessModel(result))
+  })
+})
+
+router.get('/facilitys/all',function (req, res, next) {
+  const result = getFacilitysAll()
+  return result.then(result=>{
     res.json(new SuccessModel(result))
   })
 })

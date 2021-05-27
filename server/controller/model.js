@@ -317,8 +317,8 @@ const getShortestPath = (startDotID, endDotID, strategy) => {
       var crossFlag = across(startDotID, endDotID)
       if (crossFlag) {
         // across campus navigation
-        var busStation = getBusStationID(dots[startDotID])
-        var railStation = getRailwayStationID(dots[startDotID])
+        var busStation = getBusStationID(dots[mapDot[startDotID]])
+        var railStation = getRailwayStationID(dots[mapDot[startDotID]])
         const busResult1 = Dijkstra(startDotID, busStation[0], strategy)
         const busResult2 = Dijkstra(busStation[1], endDotID, strategy)
         const railResult1 = Dijkstra(startDotID, railStation[0], strategy)

@@ -15,6 +15,7 @@
             <span>校园导览系统</span>
           </el-header>
           <el-main height="80%">
+            <span>Beijing time: {{backendTime.hour}}:{{backendTime.minute}}:{{backendTime.second}} </span><br>
             <span>Current time: {{ Math.floor(currentTime / 3600) }} hour {{ Math.floor(currentTime / 60) }} minute {{ Math.floor(currentTime) % 60 }} second</span><br>
             <span>Current position: id = {{ currentPositionID }} name = {{ currentPositionName }} </span>
             <el-switch style="display: block" v-model="buptCampusValue" active-color="#13ce66" inactive-color="#409EFF" active-text="buptShaheCampus" inactive-text="buptMainCampus"></el-switch>
@@ -312,6 +313,7 @@ export default {
       interval: null,
       map: null,
       currentTime: 0,
+      backendTime: { hour: '', minute: '', second: '' },
       posisiontNow: 0,
       buptCampusValue: 0,
       facilitysOptions: [],
@@ -693,6 +695,16 @@ export default {
     }, 2000)
   },
   mounted() {
+    this.$nextTick(() => {
+      var timeAdd = () => {
+        this.backendTime = {
+          hour: (this.backendTime.hour + Math.floor((Math.floor((this.backendTime.second + 1) / 60) + this.backendTime.minute) / 60)) % 24,
+          minute: (this.backendTime.minute + Math.floor((this.backendTime.second + 1) / 60)) % 60,
+          second: (this.backendTime.second + 1) % 60,
+        }
+      }
+      setInterval(timeAdd, 100/3);
+    })
     // 从数据库获取数据并保存
     this.$axios.get('/api/facilitys/all').then(res => {
       dotTable=res.data.data;

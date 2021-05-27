@@ -15,10 +15,23 @@
             <span>校园导览系统</span>
           </el-header>
           <el-main height="80%">
-            <span>Beijing time: {{backendTime.hour}}:{{backendTime.minute}}:{{backendTime.second}} </span><br>
-            <span>Current time: {{ Math.floor(currentTime / 3600) }} hour {{ Math.floor(currentTime / 60) }} minute {{ Math.floor(currentTime) % 60 }} second</span><br>
-            <span>Current position: id = {{ currentPositionID }} name = {{ currentPositionName }} </span>
-            <el-switch style="display: block" v-model="buptCampusValue" active-color="#13ce66" inactive-color="#409EFF" active-text="buptShaheCampus" inactive-text="buptMainCampus"></el-switch>
+            <el-row :gutter="20">
+              <el-col :span="8"><span>北京时间: {{backendTime.hour}}时  {{backendTime.minute}}分  {{backendTime.second}}秒</span></el-col>
+              <el-col :span="16"> 
+                <el-time-picker v-model="initialTime" :picker-options="{selectableRange: '6:30:00 - 22:30:00'}" placeholder="任意时间点"></el-time-picker>
+                <el-tooltip content="重置系统时间" placement="top" effect="dark">
+                  <el-button @click="handleRestartTime" type="primary" icon="el-icon-edit" circle></el-button>
+                </el-tooltip>
+              </el-col>
+            </el-row>
+            <el-row :gutter="20">
+            <el-col :span="12" :offset="0"><span>路线时间: {{ Math.floor(currentTime / 3600) }} hour {{ Math.floor(currentTime / 60) }} minute {{ Math.floor(currentTime) % 60 }} second</span><br></el-col>
+            <el-col :span="12" :offset="0"><span>经过位置: {{ currentPositionName }} </span></el-col>
+            </el-row>
+            <el-row :gutter="0">
+            <el-switch style="display: block" v-model="buptCampusValue" active-color="#13ce66" inactive-color="#409EFF" active-text="BUPT ShaHe Campus" inactive-text="BUPT Main Campus"></el-switch>            
+            </el-row>
+            
             <el-button-group>
               <el-button @click="handlePlay" type="success" icon="el-icon-video-play">play</el-button>
               <el-button @click="handlePause" type="warning" icon="el-icon-video-pause">pause</el-button>
@@ -107,31 +120,31 @@
               </el-dialog>
             </el-button-group>
             <el-tabs type="border-card">
-              <el-tab-pane label="nearby">
+              <el-tab-pane label="附近">
                 <el-table :data="nearby" height="500" stripe style="width: 100%">
-                  <el-table-column prop="dist" label="dist" width="60"></el-table-column>
-                  <el-table-column prop="name" label="name" width="120"></el-table-column>
-                  <el-table-column prop="type" label="type" width="60"></el-table-column>
-                  <el-table-column prop="description" label="description" width="240"></el-table-column>
+                  <el-table-column prop="dist" label="距离(m)" width="80"></el-table-column>
+                  <el-table-column prop="name" label="名称" width="120"></el-table-column>
+                  <el-table-column prop="type" label="类型" width="100"></el-table-column>
+                  <el-table-column prop="description" label="标签" width="240"></el-table-column>
                 </el-table>
               </el-tab-pane>
-              <el-tab-pane label="travel plan">
+              <el-tab-pane label="导航路线">
                 <el-table :data="routeData" height="500" stripe style="width: 100%">
-                  <el-table-column prop="fromname" label="from" width="120"></el-table-column>
-                  <el-table-column prop="toname" label="to" width="120"></el-table-column>
-                  <el-table-column prop="type" label="type" width="60"></el-table-column>
-                  <el-table-column prop="efficiency" label="efficiency" width="120"></el-table-column>
+                  <el-table-column prop="fromname" label="出发点" width="120"></el-table-column>
+                  <el-table-column prop="toname" label="到达点" width="120"></el-table-column>
+                  <el-table-column prop="type" label="边类型" width="60"></el-table-column>
+                  <el-table-column prop="efficiency" label="拥挤度" width="120"></el-table-column>
                 </el-table>
               </el-tab-pane>
-              <el-tab-pane label="facilitys">
+              <el-tab-pane label="全部建筑">
                 <el-table :data="facilityswithouttype0" height="500" stripe style="width: 100%">
-                  <el-table-column prop="name" label="name" width="120"></el-table-column>
-                  <el-table-column prop="type" label="type" width="60"></el-table-column>
+                  <el-table-column prop="name" label="名称" width="120"></el-table-column>
+                  <el-table-column prop="type" label="类型" width="100"></el-table-column>
                   <!--
                   <el-table-column prop="location" label="location" width="120"></el-table-column>
                   -->
-                  <el-table-column prop="description" label="description" width="120"></el-table-column>
-                  <el-table-column label="operation" width="180">
+                  <el-table-column prop="description" label="标签" width="120"></el-table-column>
+                  <el-table-column label="操作" width="180">
                     <template slot-scope="scope">
                       <el-button size="mini" @click="editFacilitys(scope.$index, scope.row)">edit</el-button>
                       <el-button size="mini" type="danger" @click="deleteFacilitys(scope.$index, scope.row)">delete</el-button>
@@ -139,18 +152,18 @@
                   </el-table-column>
                 </el-table>
               </el-tab-pane>
-              <el-tab-pane label="paths">
+              <el-tab-pane label="全部路径">
                 <el-table :data="paths" height="500" stripe style="width: 100%">
-                  <el-table-column prop="type" label="type" width="60"></el-table-column>
-                  <el-table-column prop="fromname" label="from" width="120"></el-table-column>
-                  <el-table-column prop="toname" label="to" width="120"></el-table-column>
-                  <el-table-column prop="efficiency" label="efficiency" width="90"></el-table-column>
+                  <el-table-column prop="type" label="边类型" width="60"></el-table-column>
+                  <el-table-column prop="fromname" label="出发点" width="120"></el-table-column>
+                  <el-table-column prop="toname" label="到达点" width="120"></el-table-column>
+                  <el-table-column prop="efficiency" label="拥挤度" width="90"></el-table-column>
                   <!--
                   <el-table-column prop="" label="length" width="90"></el-table-column>
                   <el-table-column prop="" label="transit time" width="90"></el-table-column>
                   <el-table-column prop="" label="crowdedness" width="90"></el-table-column>
                   -->
-                  <el-table-column label="operation" width="180">
+                  <el-table-column label="操作" width="180">
                     <template slot-scope="scope">
                       <el-button size="mini" @click="editPaths(scope.$index, scope.row)">edit</el-button>
                       <el-button size="mini" type="danger" @click="deletePaths(scope.$index, scope.row)">delete</el-button>
@@ -158,15 +171,12 @@
                   </el-table-column>
                 </el-table>
               </el-tab-pane>
-              <el-tab-pane label="timetable">
-                <el-table :data="vehiclesTimetable" height="500" stripe style="width: 100%">
-                  <el-table-column prop="number" label="number" width="90"></el-table-column>
-                  <el-table-column prop="type" label="type" width="90"></el-table-column>
-                  <el-table-column prop="departure" label="departure" width="120"></el-table-column>
-                  <el-table-column prop="departureTime" label="departure time" width="150"></el-table-column>
-                  <el-table-column prop="arrival" label="arrival" width="120"></el-table-column>
-                  <el-table-column prop="arrivalTime" label="arrival time" width="120"></el-table-column>
-                  <el-table-column label="operation" width="180">
+              <el-tab-pane label="班车时刻表">
+                <el-table :data="schoolBusTimetable" height="500" stripe style="width: 100%">
+                  <el-table-column prop="direction" label="方向" width="120"></el-table-column>
+                  <el-table-column prop="departureTime" label="出发时间" width="120"></el-table-column>
+                  <el-table-column prop="arrivalTime" label="预计抵达时间" width="120"></el-table-column>
+                  <el-table-column label="操作" width="180">
                     <template slot-scope="scope">
                       <el-button size="mini" @click="editVehiclesTimetable(scope.$index, scope.row)">edit</el-button>
                       <el-button size="mini" type="danger" @click="deleteVehiclesTimetable(scope.$index, scope.row)">delete</el-button>
@@ -310,10 +320,11 @@ export default {
   name: 'App',
   data() {
     return {
-      interval: null,
       map: null,
       currentTime: 0,
-      backendTime: { hour: '', minute: '', second: '' },
+      initialTime: new Date(2021, 5, 20, 8, 0),
+      backendTime: { hour: 8, minute: 0, second: 0 },
+      timeCount: 0,
       posisiontNow: 0,
       buptCampusValue: 0,
       facilitysOptions: [],
@@ -335,14 +346,14 @@ export default {
       facilityForm: { name: '', type: '', description: '', position: '' },
       roadForm: { type: '', departure: '', arrival: '', efficiency: '' },
       travelersPlansForm: { id: '', requestTime: '', departure: '', arrival: '', plan: '' },
-      vehiclesTimetableForm: { number: '', type: '', departure: '', departureTime: '', arrival: '', arrivalTime: '', risk: '' },
+      schoolBusTimetableForm: { direction: '', departureTime: '', arrival: '', arrivalTime: '', },
       form: {},
       facilitys: [],
       facilityswithouttype0: [],
       paths: [],
       nearby: [],
       routeData: [{fromid: 0}],
-      vehiclesTimetable: [],
+      schoolBusTimetable: [],
       travelersStatus: [],
       travelersPlans: [],
       log: [],
@@ -524,10 +535,17 @@ export default {
           console.log('error', err)
         })
     },
-    getVehiclesTimetable() {
-      this.$axios.get('/api/vehicles/timetable')// !
+    getSchoolBusTimetable() {
+      this.$axios.get('/api/timetable/schoolbus')// !
         .then(res => {
-          this.vehiclesTimetable = res.data.data
+          this.schoolBusTimetable = res.data.data
+          for(let i = 0; i < this.schoolBusTimetable.length; i++) {
+            this.schoolBusTimetable[i] = {
+              direction: this.schoolBusTimetable[i].direction == "-1" ? "本部 -> 沙河" : "沙河 -> 本部",
+              departureTime: this.schoolBusTimetable[i].hour.toString() + "时 " + this.schoolBusTimetable[i].minute.toString() + "分",
+              arrivalTime: ((this.schoolBusTimetable[i].hour + 1) % 24).toString() + "时 " + this.schoolBusTimetable[i].minute.toString() + "分"
+            }
+          }
         })
         .catch(err => {
           console.log('error', err)
@@ -562,10 +580,10 @@ export default {
         })
     },
     getAllData() {
+      this.getSchoolBusTimetable()
       this.getFacilitys()
       this.getFacilitysWithoutType0()
       this.getPaths()
-      //this.getVehiclesTimetable()
     },
     displayData() {
       sourceFeatures.clear();
@@ -630,6 +648,28 @@ export default {
       this.$axios.get(`/api/facilitys/around?position=${location}` + string)// !
         .then(res => {
           this.nearby = res.data.data
+          for(let i = 0; i < this.nearby.length; i++) {
+            switch (this.nearby[i].type) {
+              case 1:
+                this.nearby[i].type = "教学设施"
+                break;
+              case 2:
+                this.nearby[i].type = "生活设施"
+                break;
+              case 3:
+                this.nearby[i].type = "娱乐设施"
+                break;
+              case 4:
+                this.nearby[i].type = "办公设施"
+                break;
+              case 5:
+                this.nearby[i].type = "地标性建筑"
+              default:
+                this.nearby[i].type = "路口"
+                break;
+            } 
+
+          }
         })
         .catch(err => {
           console.log('error', err)
@@ -638,7 +678,7 @@ export default {
     updateData() {
     },
     initAnimation() {
-      this.$axios.post(`/api/plan?startid=${this.navigateForm.departure}&endid=${this.navigateForm.arrival}&type=${this.navigateForm.strategy.strategy}`, this.navigateForm.strategy.pathpoints)
+      this.$axios.post(`/api/plan?startid=${this.navigateForm.departure}&endid=${this.navigateForm.arrival}&type=${this.navigateForm.strategy.strategy}&hour=${this.backendTime.hour}&minute=${this.backendTime.minute}&second=${this.backendTime.second}`, this.navigateForm.strategy.pathpoints)
         .then(res => {
           lineString.setCoordinates([]);
           pathWeight=[];
@@ -676,6 +716,9 @@ export default {
     handlePause() {
       isPlay = false;
     },
+    handleRestartTime() {
+      this.backendTime = {hour: this.initialTime.getHours(), minute: this.initialTime.getMinutes(), second: this.initialTime.getSeconds()}
+    },
     handleReset() {
       isPlay = false;
       this.posisiontNow = 0;
@@ -708,7 +751,6 @@ export default {
     // 从数据库获取数据并保存
     this.$axios.get('/api/facilitys/all').then(res => {
       dotTable=res.data.data;
-      console.log(dotTable)
       }).then(res => {
         // 将数据库中的所有边显示在地图上
         this.$axios.get('/api/roads').then(res => {
@@ -777,12 +819,18 @@ export default {
 
     //fire the animation
     var animation = function () {
-      if (polyline != null && self.posisiontNow < polyline.length && isPlay) {
-        while(self.currentTime>pathWeightSum[self.posisiontNow+1]){
+      if (isPlay && polyline != null && self.posisiontNow < polyline.length) {
+        while(self.currentTime > pathWeightSum[self.posisiontNow + 1]){
           self.posisiontNow++;
         }
+        if(pathWeightSum[self.posisiontNow + 1] == undefined && self.currentTime >= pathWeightSum[self.posisiontNow]) {
+          isPlay = false;
+          self.getNearby(transform(polyline[self.posisiontNow], 'EPSG:3857' ,'EPSG:4326'), 50);
+          self.timeCount = 0;
+          return;
+        }
         var displayLine=polyline.slice(0,self.posisiontNow+1);
-        var internalTime=self.currentTime-pathWeightSum[self.posisiontNow];
+        var internalTime=self.currentTime-pathWeightSum[self.posisiontNow];        
         var internalMarker=[
           polyline[self.posisiontNow][0]+(polyline[self.posisiontNow+1][0]-polyline[self.posisiontNow][0])*internalTime/pathWeight[self.posisiontNow],
           polyline[self.posisiontNow][1]+(polyline[self.posisiontNow+1][1]-polyline[self.posisiontNow][1])*internalTime/pathWeight[self.posisiontNow]
@@ -792,6 +840,8 @@ export default {
         marker.setPosition(internalMarker);
         mapView.setCenter(internalMarker);
         self.currentTime += deltaTtime / 1000.0 * 6 * 5;
+        if(++self.timeCount % 10 == 0)
+          self.getNearby(transform(internalMarker, 'EPSG:3857' ,'EPSG:4326'), 50)
         /* currentTime is 6 times of deltaTtime. 
           * deltaTtime measures by ms, currentTime measures by second.
           * real deltaTtime goes 10s correspond to simulation system currentTime 1min.
@@ -800,7 +850,7 @@ export default {
     };
     map.once('postcompose', function (event) {
       console.info('postcompose');
-      this.interval = setInterval(animation, deltaTtime);
+      setInterval(animation, deltaTtime);
     });
   },
   updated() {
@@ -811,7 +861,9 @@ export default {
 </script>
 
 <style>
-
+  body{
+    font-family: "Helvetica Neue",Helvetica,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","微软雅黑",Arial,sans-serif;
+  }
   #marker {
     width: 20px;
     height: 20px;

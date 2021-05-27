@@ -1,7 +1,6 @@
 const { exec } = require('../database/mysql')
 const { SBplans, SBterminal, RWterminal } = require('../config/schoolBusTimetable')
 const { DIST_BETWEEN_CAMPUS, BUS_TIME, RAILWAY_TIME, DEFAULT_RADIUS, SPEED } = require('../config/constants')
-const { getCurrentTime } = require('./utils')
 
 const DEBUG = 0
 const TEST = 0
@@ -21,9 +20,8 @@ var mapDot = new Array()
  */
 class PriorityQueue {
   // tree[0] is empty!
-  constructor(strategy) {
+  constructor() {
     this.tree = []
-    this.strategy = strategy
     this.length = 0
   }
 
@@ -39,7 +37,7 @@ class PriorityQueue {
     // val: {id: , dist: }
     this.tree[++this.length] = val
     let index = this.length
-    while (index != 1 && this._compare(val.dist, this.tree[this.father(index)].dist, this.strategy)) {
+    while (index != 1 && this._compare(val.dist, this.tree[this.father(index)].dist)) {
       this._swap(index, this.father(index))
       index = this.father(index)
     }
@@ -54,7 +52,7 @@ class PriorityQueue {
     while (this.left(index) <= this.length) {
       if (
         this.right(index) <= this.length &&
-        this._compare(this.tree[this.right(index)].dist, this.tree[this.left(index)].dist, this.strategy)
+        this._compare(this.tree[this.right(index)].dist, this.tree[this.left(index)].dist)
       )
         tmp = this.right(index)
       else tmp = this.left(index)
@@ -81,8 +79,8 @@ class PriorityQueue {
     this.tree[index2] = tmp
   }
 
-  _compare(index1, index2, strategy) {
-    // return 1 -> index1 is better than index2 under specific strategy
+  _compare(index1, index2) {
+    // return 1 -> index1 is better than index2
     return index1 < index2
   }
 }
@@ -121,11 +119,18 @@ const Dist = (dotA, dotB) => {
  * @param {edge} edge edge connecting above dots
  * @param {number} strategy strategy used to travel
  * @returns {number} time cost from dotA to dotB via edge
+ * strategy 0, 1, 2: walk; strategy 3: use transportation
+ * strategy 0: least distance
+ * strategy 1: least time (with efficiency)
+ * strategy 2: least distance (with passbys)
+ * strategy 3: least time (with transportation and efficiency)
  */
 const calcCost = (dotA, dotB, edge, strategy) => {
-  let speed = SPEED[0]
+  let speed
   let efficiency = 1
-  if (strategy == 3) speed = SPEED[edge.type]
+  if (strategy == 0 || strategy == 2) speed = 1
+  else if (strategy == 1) speed = SPEED[0]
+  else speed = SPEED[edge.type]
   if (strategy == 1 || strategy == 3) efficiency = edge.efficiency
   return (Dist(dotA, dotB) / speed) * efficiency
 }
@@ -217,7 +222,7 @@ const Dijkstra = (startDotID, endDotID, strategy) => {
     }
     if (DEBUG_DETAIL) console.log(`now state: ${nowState.id}, ${nowState.dist}`)
     for (var nowEdge = firstEdge[nowState.id]; nowEdge != null; nowEdge = nextEdge[nowEdge]) {
-      if (DEBUG_DETAIL) console.log(`next dot ${edges[nowEdge].toid}: ${dots[mapDot[edges[nowEdge].toid]].name}`)
+      // if (DEBUG_DETAIL) console.log(`next dot ${edges[nowEdge].toid}: ${dots[mapDot[edges[nowEdge].toid]].name}`)
       nextState = {
         id: edges[nowEdge].toid,
         dist:
@@ -305,14 +310,11 @@ const getTimeAdd = (time, sec) => {
  * @param {number} endDotID arrival dot ID
  * @param {number} strategy strategy to move
  */
-const getShortestPath = (startDotID, endDotID, strategy) => {
+const getShortestPath = (startDotID, endDotID, strategy, startTime) => {
   const promise = new Promise((resolve, reject) => {
     if (DEBUG) console.log(`Running ShortestPath.`)
     const dijInit = Dijkstra_initial()
     dijInit.then(() => {
-      console.log(startDotID, endDotID, strategy);
-      console.log(dots[mapDot[startDotID]]);
-      console.log(dots[mapDot[endDotID]]);
       var result
       var crossFlag = across(startDotID, endDotID)
       if (crossFlag) {
@@ -341,7 +343,7 @@ const getShortestPath = (startDotID, endDotID, strategy) => {
         bus_result = {
           answer:
             busResult1.answer +
-            getWaitingTime(getTimeAdd(getCurrentTime(), Math.floor(busResult1.answer))) +
+            getWaitingTime(getTimeAdd(startTime, Math.floor(busResult1.answer))) +
             BUS_TIME +
             busResult2.answer,
           path: busResult1.path.concat(busResult2.path),
@@ -359,6 +361,7 @@ const getShortestPath = (startDotID, endDotID, strategy) => {
           console.log(rail_result)
         }
       } else result = Dijkstra(startDotID, endDotID, strategy)
+      // console.log(result.path)
       resolve({ answer: result.answer, path: result.path })
     }, null)
   }, null)

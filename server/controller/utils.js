@@ -1,20 +1,5 @@
 const xss = require('xss')
 const { exec } = require('../database/mysql')
-const { START_TIME, FRESH_TIME, START_INDEX } = require('../config/constants')
-
-var currentState = 1
-var currentTime = START_TIME[START_INDEX]
-
-const clock = status => {
-  if (status === 1) {
-    currentTime = {
-      hour: (currentTime.hour + Math.floor((Math.floor((currentTime.second + 1) / 60) + currentTime.minute) / 60)) % 24,
-      minute: (currentTime.minute + Math.floor((currentTime.second + 1) / 60)) % 60,
-      second: (currentTime.second + 1) % 60,
-    }
-  }
-}
-setInterval(clock, FRESH_TIME, currentState)
 
 const getFacility = id => {
   const sql = `select * from dottable where id=${id};`
@@ -76,14 +61,6 @@ const createRoad = (fromid, toid, type, efficiency) => {
   return exec(sql)
 }
 
-const getCurrentTime = () => {
-  return currentTime
-}
-
-const getCurrentState = () => {
-  return currentState
-}
-
 /* ------ TRASH ------ */
 
 const queryToNum = query => {
@@ -92,11 +69,6 @@ const queryToNum = query => {
     result = NaN
   }
   return result
-}
-
-const getVehiclesTimetable = () => {
-  const sql = `select * from vehiclestimetable;`
-  return exec(sql)
 }
 
 const addVehiclesTimetable = (number, type, departure, departureTime, arrival, arrivalTime, risk) => {
@@ -127,8 +99,6 @@ const getLog = () => {
 }
 
 module.exports = {
-  getCurrentTime,
-  getCurrentState,
   createFacility,
   getFacility,
   updateFacility,
@@ -142,7 +112,6 @@ module.exports = {
 
   queryToNum,
 
-  getVehiclesTimetable,
   addVehiclesTimetable,
   updateVehiclesTimetable,
   deleteVehiclesTimetable,

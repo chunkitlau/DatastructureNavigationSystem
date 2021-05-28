@@ -15,8 +15,6 @@ const {
   getRoads,
 
   queryToNum,
-
-  getVehiclesTimetable,
   addVehiclesTimetable,
   updateVehiclesTimetable,
   deleteVehiclesTimetable,
@@ -45,7 +43,7 @@ router.get('/', function (req, res, next) {
     post   /plan?startid=&endid=&type=<br>
     get    /current/time<br>
     get    /current/state<br>
-    get    /schoolbus/timetable<br>
+    get    /timetable/schoolbus<br>
     
 
     get    /vehicles/timetable<br>
@@ -82,9 +80,9 @@ router.get('/facilitys/around', function (req, res, next) {
   })
 })
 
-router.get('/facilitys/all',function (req, res, next) {
+router.get('/facilitys/all', function (req, res, next) {
   const result = getFacilitysAll()
-  return result.then(result=>{
+  return result.then(result => {
     res.json(new SuccessModel(result))
   })
 })
@@ -151,10 +149,11 @@ router.post('/plan', function (req, res, next) {
   const endid = parseInt(req.query.endid)
   const type = parseInt(req.query.type)
   const passby = req.body || null
+  const starttime = { hour: parseInt(req.query.hour), minute: parseInt(req.query.minute), second: parseInt(req.query.second) }
   if (passby != null) for (let i = 0; i < passby.length; i++) passby[i] = parseInt(passby[i].value)
   var result
   if (type == 2) result = getPassbyShortestPath(startid, endid, passby)
-  else result = getShortestPath(startid, endid, type)
+  else result = getShortestPath(startid, endid, type, starttime)
   return result.then(result => {
     res.json(new SuccessModel(result))
   })
@@ -170,7 +169,7 @@ router.get('/currnet/state', function (req, res, next) {
   res.json(new SuccessModel(result))
 })
 
-router.get('/schoolbus/timetable', function (req, res, nex) {
+router.get('/timetable/schoolbus', function (req, res, nex) {
   const result = SBplans
   res.json(new SuccessModel(result))
 })
@@ -178,14 +177,6 @@ router.get('/schoolbus/timetable', function (req, res, nex) {
 module.exports = router
 
 /* ------ TRASH ------ */
-
-router.get('/vehicles/timetable', function (req, res, next) {
-  const result = getVehiclesTimetable()
-  return result.then(result => {
-    res.json(new SuccessModel(result))
-  })
-  //!
-})
 
 router.post('/vehicles/timetable', function (req, res, next) {
   const number = queryToNum(req.query.number)

@@ -666,6 +666,10 @@ export default {
           lineStringFeature.setStyle(styles['route1']);
           mapView.setZoom(18.0);
           mapView.setCenter(polyline[0]);
+          // var polygon = new ol.geom.Polygon([[[116.2857060, 40.1573861], [116.2857556, 40.1572744], [116.2859809, 40.1573297], [116.2859233, 40.1574404], [116.2857060, 40.1573861]]]);
+          // polygon.applyTransform(ol.proj.getTransform('EPSG:4326', 'EPSG:3857'));
+          // var feature = new ol.Feature(polygon);
+          // sourceFeatures.addFeatures([feature]);
         }).catch(err => {
           console.log('error', err)
         });
@@ -708,7 +712,7 @@ export default {
     // 从数据库获取数据并保存
     this.$axios.get('/api/facilitys/all').then(res => {
       dotTable=res.data.data;
-      console.log(dotTable)
+      // console.log(dotTable);
       }).then(res => {
         // 将数据库中的所有边显示在地图上
         this.$axios.get('/api/roads').then(res => {

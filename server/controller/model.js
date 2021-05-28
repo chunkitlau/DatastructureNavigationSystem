@@ -1,6 +1,7 @@
 const { exec } = require('../database/mysql')
 const { SBplans, SBterminal, RWterminal } = require('../config/schoolBusTimetable')
 const { DIST_BETWEEN_CAMPUS, BUS_TIME, RAILWAY_TIME, DEFAULT_RADIUS, SPEED } = require('../config/constants')
+const { getFacilitysAround } = require('./utils')
 
 const DEBUG = 0
 const TEST = 0
@@ -177,18 +178,18 @@ const Dijkstra_initial = () => {
 /**
  *
  * @param {number} startDotID departure dot ID
- * @param {number} endDotID arrival dot ID
+ * @param {number} endDotIDs arrival dots ID
  * @param {number} strategy strategy to move
  * @returns {object{number, {Array}}} {answer, path} time cost and path for current plan
  * Answer saved into pathtoLoc
  */
-const Dijkstra = (startDotID, endDotID, strategy) => {
-  if (DEBUG) console.log(`Running DIJ: start: ${startDotID}, end: ${endDotID}, strategy: ${strategy}`)
-
+const Dijkstra = (startDotID, endDotIDs, strategy) => {
+  if (DEBUG) console.log(`Running DIJ: start: ${startDotID}, end: ${endDotIDs}, strategy: ${strategy}`)
   var pq = new PriorityQueue(strategy)
   var befEdge = new Array()
   var dist = new Array()
   var answer = 0
+  var endDot
   var pathToLoc = new Array()
   var nowState, nextState
 
@@ -201,11 +202,12 @@ const Dijkstra = (startDotID, endDotID, strategy) => {
       continue
     }
     dist[nowState.id] = nowState.dist
-    if (nowState.id == endDotID) {
+    if (endDotIDs.indexOf(nowState.id) != -1) {
       if (DEBUG) console.log(`endDot detected.`)
-      let index = endDotID
+      let index = nowState.id
       let tmp
-      answer = dist[endDotID]
+      answer = dist[index]
+      endDot = dots[mapDot[nowState.id]]
       while (index != startDotID) {
         tmp = befEdge[index]
         pathToLoc.push({
@@ -237,7 +239,7 @@ const Dijkstra = (startDotID, endDotID, strategy) => {
       }
     }
   }
-  return { answer: answer, path: pathToLoc.reverse() }
+  return { answer: answer, path: pathToLoc.reverse(), endDot: endDot }
 }
 
 /**
@@ -321,10 +323,10 @@ const getShortestPath = (startDotID, endDotID, strategy, startTime) => {
         // across campus navigation
         var busStation = getBusStationID(dots[mapDot[startDotID]])
         var railStation = getRailwayStationID(dots[mapDot[startDotID]])
-        const busResult1 = Dijkstra(startDotID, busStation[0], strategy)
-        const busResult2 = Dijkstra(busStation[1], endDotID, strategy)
-        const railResult1 = Dijkstra(startDotID, railStation[0], strategy)
-        const railResult2 = Dijkstra(railStation[1], endDotID, strategy)
+        const busResult1 = Dijkstra(startDotID, [busStation[0]], strategy)
+        const busResult2 = Dijkstra(busStation[1], [endDotID], strategy)
+        const railResult1 = Dijkstra(startDotID, [railStation[0]], strategy)
+        const railResult2 = Dijkstra(railStation[1], [endDotID], strategy)
         const getWaitingTime = currentTime => {
           for (let i = 0; i < SBplans.length; i++) {
             if (SBplans[i].direction != crossFlag) continue
@@ -360,7 +362,7 @@ const getShortestPath = (startDotID, endDotID, strategy, startTime) => {
           console.log(`By railway:`)
           console.log(rail_result)
         }
-      } else result = Dijkstra(startDotID, endDotID, strategy)
+      } else result = Dijkstra(startDotID, [endDotID], strategy)
       // console.log(result.path)
       resolve({ answer: result.answer, path: result.path })
     }, null)
@@ -386,7 +388,7 @@ const getPassbyShortestPath = (startDotID, endDotID, passbysID) => {
       passbysID.push(endDotID)
       for (var i = 0; i < passbysID.length; i++) {
         endDotID = passbysID[i]
-        result = Dijkstra(startDotID, endDotID, 2) // walking
+        result = Dijkstra(startDotID, [endDotID], 2) // walking
         answer += result.answer
         path = path.concat(result.path)
         startDotID = endDotID
@@ -419,4 +421,6 @@ if (TEST) {
 module.exports = {
   getShortestPath,
   getPassbyShortestPath,
+  Dijkstra,
+  Dijkstra_initial,
 }

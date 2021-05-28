@@ -1,5 +1,6 @@
 const xss = require('xss')
 const { exec } = require('../database/mysql')
+const { Dijkstra, Dijkstra_initial } = require('./model')
 
 const getFacility = id => {
   const sql = `select * from dottable where id=${id};`
@@ -11,12 +12,31 @@ const updateFacility = (id, name, type, description) => {
   return exec(sql)
 }
 
-const getFacilitys = desc => {
-  var sql
-  if (desc == '') sql = `select * from dottable where type != 0`
-  else
-    sql = `select * from dottable where name REGEXP '${desc}' and type != 0 union select * from dottable where description REGEXP '${desc}' and type != 0;`
-  return exec(sql)
+const getFacilitys = (desc, positon, time) => {
+  if (desc == '') {
+    const sql = `select * from dottable where type != 0`
+    return exec(sql)
+  } else {
+    const promise = new Promise((resolve, reject) => {
+      const sql = `select * from dottable where name REGEXP '${desc}' and type != 0 union select * from dottable where description REGEXP '${desc}' and type != 0;`
+      var p1List = [getFacilitysAround(positon, 50), exec(sql), Dijkstra_initial()]
+      Promise.all(p1List).then(values => {
+        res = values[1]
+        const startID = values[0][0].id
+        var endIDs = []
+        for (let i = 0; i < res.length; i++) endIDs.push(res[i].id)
+        var leastDistance = Dijkstra(startID, endIDs, 0)
+        var leastTime = Dijkstra(startID, endIDs, 3)
+        res = {
+          leastDistance: { dot: leastDistance.endDot, answer: leastDistance.answer },
+          leastTime: { dot: leastTime.endDot, answer: leastTime.answer },
+          all: res,
+        }
+        resolve(res)
+      })
+    })
+    return promise
+  }
 }
 
 const getFacilitysAround = (nowlocation, distance) => {
@@ -101,8 +121,8 @@ const getLog = () => {
 module.exports = {
   createFacility,
   getFacility,
-  updateFacility,
   getFacilitys,
+  updateFacility,
   getFacilitysAround,
   getFacilitysAll,
   deleteFacility,

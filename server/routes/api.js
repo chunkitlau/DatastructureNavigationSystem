@@ -5,8 +5,8 @@ const {
   getCurrentState,
   createFacility,
   getFacility,
-  updateFacility,
   getFacilitys,
+  updateFacility,
   getFacilitysAround,
   getFacilitysAll,
   deleteFacility,
@@ -31,7 +31,7 @@ router.get('/', function (req, res, next) {
     api list:<br> (following 'ip:port/api')
     
     post   /facility?name=&type=&position=&description=<br>
-    get    /facilitys?description=<br>
+    get    /facilitys?description=&position=&hour=&minute=&second<br>
     get    /facility<br>
     put    /facility?id=&name=&type=&description=<br>
     get    /facilitys/around?distance=<br>
@@ -40,7 +40,7 @@ router.get('/', function (req, res, next) {
     post   /road?type=&fromid=&toid=&efficiency=<br>
     get    /roads<br>
     get    /road<br>
-    post   /plan?startid=&endid=&type=<br>
+    post   /plan?startid=&endid=&type=&hour=&minute=&second<br>
     get    /current/time<br>
     get    /current/state<br>
     get    /timetable/schoolbus<br>
@@ -64,7 +64,9 @@ router.get('/facility', function (req, res, next) {
 
 router.get('/facilitys', function (req, res, next) {
   const desc = req.query.description || ''
-  const result = getFacilitys(desc)
+  const positon = req.query.position
+  const time = {hour: req.query.hour || '', minute: req.query.minute || '', second: req.query.second || ''}
+  const result = getFacilitys(desc, positon, time)
   return result.then(result => {
     res.json(new SuccessModel(result))
   })

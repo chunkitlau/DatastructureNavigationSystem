@@ -411,7 +411,8 @@ export default {
   methods: {
     searchFacilitys(query) {
       if (query !== '') {
-        this.$axios.get(`/api/facilitys?description=${query}`)// !
+        var position = lastclick[lastclickp];
+        this.$axios.get(`/api/facilitys?description=${query}&position=${position}&hour=${this.backendTime.hour}&minute=${this.backendTime.minute}&second=${this.backendTime.second}`)// !
         .then(res => {
           this.facilitysOptions = res.data.data
         })
@@ -589,7 +590,7 @@ export default {
       this.getPaths()
     },
     displayData() {
-      sourceFeatures.clear();
+      // sourceFeatures.clear();
       
       for(var i in dotTable){
         var feature=new ol.Feature({
@@ -667,6 +668,10 @@ export default {
                 break;
               case 5:
                 this.nearby[i].type = "地标性建筑"
+                break;
+              case 6:
+                this.nearby[i].type = "室内设施"
+                break;
               default:
                 this.nearby[i].type = "路口"
                 break;
@@ -760,7 +765,7 @@ export default {
           edgeTable=res.data.data;
           }).then(res => {
             // 默认不显示数据库信息，如有需要请取消下行注释
-            // this.displayData();
+            this.displayData();
           }).catch(err=>{
             console.log(err);
           })

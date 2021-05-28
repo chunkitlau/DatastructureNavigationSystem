@@ -712,7 +712,7 @@ export default {
           routeFeature.setStyle(styles['route']);
           lineStringFeature.setGeometry(lineString);
           lineStringFeature.setStyle(styles['route1']);
-          mapView.setZoom(20.0);
+          mapView.setZoom(18.0);
           mapView.setCenter(polyline[0]);
         }).catch(err => {
           console.log('error', err)
@@ -868,7 +868,7 @@ export default {
       let feature = new ol.Feature(polygon);
       let polygonStyle=new ol.style.Style({
         stroke: new ol.style.Stroke({color: "#4284f5"}),
-        text: new ol.style.Text({text: indoorData.elements[i].tags.name,fill:new ol.style.Fill({color: "#999999"})})
+        // text: new ol.style.Text({text: indoorData.elements[i].tags.name,fill:new ol.style.Fill({color: "#999999"})})
       });
       feature.setStyle(polygonStyle);
       sourceFeatures.addFeatures([feature]);

@@ -185,7 +185,7 @@ const Dijkstra_initial = () => {
  */
 const Dijkstra = (startDotID, endDotIDs, strategy) => {
   if (DEBUG) console.log(`Running DIJ: start: ${startDotID}, end: ${endDotIDs}, strategy: ${strategy}`)
-  var pq = new PriorityQueue(strategy)
+  var pq = new PriorityQueue()
   var befEdge = new Array()
   var dist = new Array()
   var answer = 0

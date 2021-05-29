@@ -27,11 +27,21 @@ const getFacilitys = (desc, positon, time) => {
         for (let i = 0; i < res.length; i++) endIDs.push(res[i].id)
         var leastDistance = Dijkstra(startID, endIDs, 0)
         var leastTime = Dijkstra(startID, endIDs, 3)
-        res = {
-          leastDistance: { dot: leastDistance.endDot, answer: leastDistance.answer },
-          leastTime: { dot: leastTime.endDot, answer: leastTime.answer },
-          all: res,
+        for (let i = 0; i < res.length; i++) {
+          if (leastDistance.endDot.id == res[i].id){
+            res[i].id = 0
+            res[i].description = res[i].description + "（最近距离）"
+          }
+          else if (leastTime.endDot.id == res[i].id) {
+            res[i].id = 1
+            res[i].description = res[i].description + "（最短时间）"
+          }
+          else res[i].id += 2
         }
+        const cmpDot = (a, b) => {
+          return a.id - b.id
+        }
+        res.sort(cmpDot)
         resolve(res)
       })
     })

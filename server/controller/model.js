@@ -177,6 +177,7 @@ const Dijkstra_initial = () => {
 
 /**
  *
+ * Calculate min distance to arrial multi-ends.
  * @param {number} startDotID departure dot ID
  * @param {number} endDotIDs arrival dots ID
  * @param {number} strategy strategy to move
@@ -406,7 +407,7 @@ if (TEST) {
   // })
   // console.log(getTimeAdd({ hour: 8, minute: 20, second: 50 }, 6732))
   // console.log(`default test: \n\tf1: getShortestPath(1,13,0)\n\tf2: getPassbyShortestPath(1, 13, [23,30])`)
-  const f1 = getShortestPath(1, 69, 0)
+  const f1 = getShortestPath(1, 69, 0,{hour: 8, minute: 30, second: 0} )
   f1.then(result => {
     console.log(result.answer)
     console.log(result.path)

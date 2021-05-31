@@ -42,13 +42,13 @@
               <el-dialog title="navigate" :visible.sync="setNavigateFormVisible">
                 <el-form :model="navigateForm">
                   <el-form-item label="departure" :label-width="formLabelWidth">
-                    <el-select v-model="navigateForm.departure" filterable remote reserve-keyword :remote-method="searchFacilitys" placeholder="please select departure">
-                      <el-option v-for="facility in facilitysOptions" :key="facility.id" :label="facility.name + ': ' + facility.description" :value="facility.id"></el-option>
+                    <el-select v-model="navigateForm.departure" filterable remote reserve-keyword :remote-method="searchFacilitysNormal" placeholder="please select departure">
+                      <el-option v-for="facility in facilitysNormalOptions" :key="facility.id" :label="facility.name + ': ' + facility.description" :value="facility.id"></el-option>
                     </el-select>
                   </el-form-item>
                   <el-form-item label="arrival" :label-width="formLabelWidth">
                     <el-select v-model="navigateForm.arrival" filterable remote reserve-keyword :remote-method="searchFacilitys" placeholder="please select arrival">
-                      <el-option v-for="facility in facilitysOptions" :key="facility.id" :label="facility.name + ': ' + facility.description" :value="facility.id"></el-option>
+                      <el-option v-for="facility in facilitysOptions" :key="facility.key" :label="facility.name + ': ' + facility.description" :value="facility.id"></el-option>
                     </el-select>
                   </el-form-item>
                   <el-form-item label="strategy" :label-width="formLabelWidth">
@@ -64,8 +64,8 @@
                       :key="pathpoint.key"
                       :prop="'pathpoints.' + index + '.value'"
                       :rules="{required: true, message: 'pathpoint can\'t be empty', trigger: 'blur'}">
-                    <el-select v-model="pathpoint.value" filterable remote reserve-keyword :remote-method="searchFacilitys" placeholder="please select pathpoint">
-                      <el-option v-for="facility in facilitysOptions" :key="facility.id" :label="facility.name + ': ' + facility.description" :value="facility.id"></el-option>
+                    <el-select v-model="pathpoint.value" filterable remote reserve-keyword :remote-method="searchFacilitysNormal" placeholder="please select pathpoint">
+                      <el-option v-for="facility in facilitysNormalOptions" :key="facility.id" :label="facility.name + ': ' + facility.description" :value="facility.id"></el-option>
                     </el-select>
                     <el-button @click.prevent="removePathpoint(pathpoint)">delete</el-button>
                   </el-form-item>
@@ -229,6 +229,7 @@ function trans(location){
 // 采点
 var lastclick = [[0,0],[0,0]], lastclickp = 1;
 var markerEl,marker;
+var positionSearch;
 
 // 点表和边表
 var dotTable,edgeTable;
@@ -340,6 +341,7 @@ export default {
       posisiontNow: 0,
       buptCampusValue: 0,
       facilitysOptions: [],
+      facilitysNormalOptions: [],
       setNavigateFormVisible: false,
       addDialogFormVisible: false,
       addTravelersPlansVisible: false,
@@ -420,16 +422,16 @@ export default {
   methods: {
     searchFacilitys(query) {
       if (query !== '') {
-        let position = internalMarker;
-        if (position == '') {
-          position = transform(buptCampusView[buptCampusValue].q.center, 'EPSG:3857' ,'EPSG:4326')
+        if (isPlay) {
+          positionSearch = internalMarker;
         }
-        console.log(position)
-        this.$axios.get(`/api/facilitys?description=${query}&position=${position}&hour=${this.backendTime.hour}&minute=${this.backendTime.minute}&second=${this.backendTime.second}`)// !
+        if (positionSearch == '') {
+          positionSearch = transform(buptCampusView[buptCampusValue].q.center, 'EPSG:3857' ,'EPSG:4326')
+        }
+        console.log(positionSearch)
+        this.$axios.get(`/api/facilitys?description=${query}&position=${positionSearch}`)// !
         .then(res => {
-          this.facilitysOptions = [res.data.data.leastDistance.dot, res.data.data.leastTime.dot].concat(res.data.data.all)
-          this.facilitysOptions[1].description = this.facilitysOptions[1].description + '(leastDistance)'
-          this.facilitysOptions[2].description = this.facilitysOptions[2].description + '(leastTime)'
+          this.facilitysOptions = res.data.data
           console.log(this.facilitysOptions)
         })
         .catch(err => {
@@ -439,6 +441,16 @@ export default {
       else {
         this.facilitysOptions = this.facilitys;
       }
+    },
+    searchFacilitysNormal(query) {
+      this.$axios.get(`/api/facilitys?description=${query}`)// !
+      .then(res => {
+        this.facilitysNormalOptions = res.data.data
+        console.log(this.facilitysNormalOptions)
+      })
+      .catch(err => {
+        console.log('error', err)
+      })
     },
     removePathpoint(item) {
       var index = this.navigateForm.strategy.pathpoints.indexOf(item)
@@ -819,6 +831,7 @@ export default {
       var EPSG4326coordinate = transform(coordinate, 'EPSG:3857' ,'EPSG:4326');
       // console.log(EPSG4326coordinate);
       lastclick[lastclickp] = EPSG4326coordinate;
+      positionSearch = EPSG4326coordinate;
       self.getNearby(EPSG4326coordinate, 50);
       // console.log('click: ' + lastclick[lastclickp] + ' and ' + lastclick[1 - lastclickp]);
       var hdms = toStringHDMS(toLonLat(coordinate));

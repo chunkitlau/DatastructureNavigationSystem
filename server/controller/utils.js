@@ -12,14 +12,17 @@ const updateFacility = (id, name, type, description) => {
   return exec(sql)
 }
 
-const getFacilitys = (desc, positon, time) => {
-  if (desc == '') {
+const getFacilitys = (desc, positon) => {
+  if (desc == undefined) {
     const sql = `select * from dottable where type != 0`
+    return exec(sql)
+  } else if (positon == undefined) {
+    const sql = `select * from dottable where name REGEXP '${desc}' and type != 0 union select * from dottable where description REGEXP '${desc}' and type != 0;`
     return exec(sql)
   } else {
     const promise = new Promise((resolve, reject) => {
       const sql = `select * from dottable where name REGEXP '${desc}' and type != 0 union select * from dottable where description REGEXP '${desc}' and type != 0;`
-      var p1List = [getFacilitysAround(positon, 50), exec(sql), Dijkstra_initial()]
+      var p1List = [getFacilitysAround(positon), exec(sql), Dijkstra_initial()]
       Promise.all(p1List).then(values => {
         res = values[1]
         const startID = values[0][0].id
@@ -28,18 +31,16 @@ const getFacilitys = (desc, positon, time) => {
         var leastDistance = Dijkstra(startID, endIDs, 0)
         var leastTime = Dijkstra(startID, endIDs, 3)
         for (let i = 0; i < res.length; i++) {
-          if (leastDistance.endDot.id == res[i].id){
-            res[i].id = 0
-            res[i].description = res[i].description + "（最近距离）"
-          }
-          else if (leastTime.endDot.id == res[i].id) {
-            res[i].id = 1
-            res[i].description = res[i].description + "（最短时间）"
-          }
-          else res[i].id += 2
+          if (leastDistance.endDot.id == res[i].id) {
+            res[i].key = 0
+            res[i].description = res[i].description + '（最近距离）'
+          } else if (leastTime.endDot.id == res[i].id) {
+            res[i].key = 1
+            res[i].description = res[i].description + '（最短时间）'
+          } else res[i].key = res[i].id + 2
         }
         const cmpDot = (a, b) => {
-          return a.id - b.id
+          return a.key - b.key
         }
         res.sort(cmpDot)
         resolve(res)
@@ -50,6 +51,7 @@ const getFacilitys = (desc, positon, time) => {
 }
 
 const getFacilitysAround = (nowlocation, distance) => {
+  if (distance == undefined) distance = 10000000
   const sql = `select *, ST_Distance_sphere(Point(${nowlocation}), location) as dist FROM dottable having dist < ${distance} and type != 0 ORDER BY dist;`
   return exec(sql)
 }

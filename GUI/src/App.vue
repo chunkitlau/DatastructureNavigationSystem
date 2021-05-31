@@ -125,7 +125,14 @@
                   <el-table-column prop="dist" label="距离(m)" width="80"></el-table-column>
                   <el-table-column prop="name" label="名称" width="120"></el-table-column>
                   <el-table-column prop="type" label="类型" width="100"></el-table-column>
-                  <el-table-column prop="description" label="标签" width="240"></el-table-column>
+                  <el-table-column prop="description" label="标签" width="90"></el-table-column>
+                  
+                  <el-table-column label="操作" width="90">
+                    <template slot-scope="scope">
+                      <el-button size="mini" @click="navigateForm.departure = scope.row.id">设为起点</el-button><br/>
+                      <el-button size="mini" @click="navigateForm.arrival = scope.row.id, setNavigate()">设为终点</el-button>
+                    </template>
+                  </el-table-column>
                 </el-table>
               </el-tab-pane>
               <el-tab-pane label="导航路线">
@@ -342,7 +349,7 @@ export default {
       formLabelWidth: '120px',
       navigateForm: { departure: '', arrival: '', 
         strategy: {
-          strategy: '',
+          strategy: '0',
           pathpoints: [{
               value: ''
           }]
@@ -446,6 +453,7 @@ export default {
       });
     },
     setNavigate() {
+      console.log(this.navigateForm);
       this.currentTime=0.;
       if (this.posisiontNow) {
         this.posisiontNow = 0;

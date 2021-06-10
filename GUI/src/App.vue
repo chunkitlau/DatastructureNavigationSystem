@@ -447,7 +447,10 @@ export default {
           positionSearch = transform(buptCampusView[buptCampusValue].q.center, 'EPSG:3857' ,'EPSG:4326')
         }
         console.log(positionSearch)
-        this.$axios.get(`/api/facilitys?description=${query}&position=${positionSearch}`)// !
+        var url
+        if(positionSearch == undefined) url = `/api/facilitys?description=${query}`
+        else url = `/api/facilitys?description=${query}&position=${positionSearch}`
+        this.$axios.get(url)// !
         .then(res => {
           this.facilitysOptions = res.data.data
           console.log(this.facilitysOptions)

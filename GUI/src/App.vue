@@ -28,8 +28,14 @@
             <el-col :span="12" :offset="0"><span>路线时间: {{ Math.floor(currentTime / 3600) }} hour {{ Math.floor(currentTime / 60) }} minute {{ Math.floor(currentTime) % 60 }} second</span><br></el-col>
             <el-col :span="12" :offset="0"><span>经过位置: {{ currentPositionName }} </span></el-col>
             </el-row>
-            <el-row :gutter="0">
-            <el-switch style="display: block" v-model="buptCampusValue" active-color="#13ce66" inactive-color="#409EFF" active-text="BUPT ShaHe Campus" inactive-text="BUPT Main Campus"></el-switch>            
+            <el-row :gutter="20">
+              <el-col :span="12">
+                <el-switch style="display: block" v-model="buptCampusValue" active-color="#13ce66" inactive-color="#409EFF" active-text="沙河校区" inactive-text="西土城校区"></el-switch>
+              </el-col>
+              <el-col :span="12">
+                <el-switch style="display: block" v-model="detailValue" active-color="#13ce66" inactive-color="#409EFF" active-text="显示细节" inactive-text="隐藏细节"></el-switch>
+              </el-col>
+              
             </el-row>
             
             <el-button-group>
@@ -257,6 +263,7 @@ var buptCampus = new ol.View({
 
 // 地图当前视角
 var buptCampusValue = 0;
+var detailValue = 1;
 var buptCampusView = [buptMainCampus, buptShaheCampus, buptCampus];
 
 var mapView = buptCampusView[buptCampusValue];
@@ -345,6 +352,7 @@ export default {
       timeCount: 0,
       posisiontNow: 0,
       buptCampusValue: 0,
+      detailValue: 0,
       facilitysOptions: [],
       facilitysNormalOptions: [],
       setNavigateFormVisible: false,
@@ -421,8 +429,12 @@ export default {
   watch: {
     // 如果 `question` 发生改变，这个函数就会运行
     buptCampusValue: function (newBuptCampusValue, oldBuptCampusValue) {
-      buptCampusValue = Number(newBuptCampusValue)
+      buptCampusValue = Number(newBuptCampusValue);
       map.setView(buptCampusView[buptCampusValue]);
+    },
+    detailValue: function (newDetailValue, oldDetailValue) {
+      detailValue = Number(newDetailValue);
+      this.displayData();
     }
   },
   methods: {
@@ -632,7 +644,12 @@ export default {
       this.getPaths()
     },
     displayData() {
-      // sourceFeatures.clear();
+      if(!detailValue) { // hide layers
+        console.log("triggered!");
+        sourceFeatures.clear();
+        // map.removeLayer(layerEdge);
+        return;
+      }
       
       for(var i in dotTable){
         var feature=new ol.Feature({

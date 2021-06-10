@@ -1,6 +1,7 @@
 const { exec } = require('../database/mysql')
 const { SBplans, SBterminal, RWterminal } = require('../config/schoolBusTimetable')
 const { DIST_BETWEEN_CAMPUS, BUS_TIME, RAILWAY_TIME, DEFAULT_RADIUS, SPEED } = require('../config/constants')
+const { addCanteenFlow } = require('./flow')
 
 const DEBUG = 0
 const TEST = 0
@@ -181,7 +182,7 @@ const Dijkstra_initial = () => {
  * @param {number} startDotID departure dot ID
  * @param {number} endDotIDs arrival dots ID
  * @param {number} strategy strategy to move
- * @returns {object{number, {Array}}} {answer, path} time cost and path for current plan
+ * @returns {object{number, {Array}, Dot}} {answer, path} time cost and path for current plan
  * Answer saved into pathtoLoc
  */
 const Dijkstra = (startDotID, endDotIDs, strategy) => {
@@ -314,6 +315,7 @@ const getTimeAdd = (time, sec) => {
  * @param {number} strategy strategy to move
  */
 const getShortestPath = (startDotID, endDotID, strategy, startTime) => {
+  addCanteenFlow(endDotID)
   const promise = new Promise((resolve, reject) => {
     if (DEBUG) console.log(`Running ShortestPath.`)
     const dijInit = Dijkstra_initial()
@@ -379,6 +381,7 @@ const getShortestPath = (startDotID, endDotID, strategy, startTime) => {
  * @description start dot and end dot must be in SAME campus
  */
 const getPassbyShortestPath = (startDotID, endDotID, passbysID) => {
+  addCanteenFlow(endDotID)
   const promise = new Promise((resolve, reject) => {
     const dijInit = Dijkstra_initial()
     dijInit.then(() => {
@@ -407,7 +410,7 @@ if (TEST) {
   // })
   // console.log(getTimeAdd({ hour: 8, minute: 20, second: 50 }, 6732))
   // console.log(`default test: \n\tf1: getShortestPath(1,13,0)\n\tf2: getPassbyShortestPath(1, 13, [23,30])`)
-  const f1 = getShortestPath(1, 69, 0,{hour: 8, minute: 30, second: 0} )
+  const f1 = getShortestPath(1, 69, 0, { hour: 8, minute: 30, second: 0 })
   f1.then(result => {
     console.log(result.answer)
     console.log(result.path)
@@ -422,6 +425,7 @@ if (TEST) {
 module.exports = {
   getShortestPath,
   getPassbyShortestPath,
+  across,
   Dijkstra,
   Dijkstra_initial,
 }

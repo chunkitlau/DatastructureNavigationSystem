@@ -126,7 +126,6 @@
                   <el-table-column prop="name" label="名称" width="120"></el-table-column>
                   <el-table-column prop="type" label="类型" width="100"></el-table-column>
                   <el-table-column prop="description" label="标签" width="90"></el-table-column>
-                  
                   <el-table-column label="操作" width="90">
                     <template slot-scope="scope">
                       <el-button size="mini" @click="navigateForm.departure = scope.row.id">设为起点</el-button><br/>
@@ -147,14 +146,11 @@
                 <el-table :data="facilityswithouttype0" height="500" stripe style="width: 100%">
                   <el-table-column prop="name" label="名称" width="120"></el-table-column>
                   <el-table-column prop="type" label="类型" width="100"></el-table-column>
-                  <!--
-                  <el-table-column prop="location" label="location" width="120"></el-table-column>
-                  -->
                   <el-table-column prop="description" label="标签" width="120"></el-table-column>
-                  <el-table-column label="操作" width="180">
+                  <el-table-column label="操作" width="90">
                     <template slot-scope="scope">
-                      <el-button size="mini" @click="editFacilitys(scope.$index, scope.row)">edit</el-button>
-                      <el-button size="mini" type="danger" @click="deleteFacilitys(scope.$index, scope.row)">delete</el-button>
+                      <el-button size="mini" @click="navigateForm.departure = scope.row.id">设为起点</el-button><br/>
+                      <el-button size="mini" @click="navigateForm.arrival = scope.row.id, setNavigate()">设为终点</el-button>
                     </template>
                   </el-table-column>
                 </el-table>
@@ -165,11 +161,6 @@
                   <el-table-column prop="fromname" label="出发点" width="120"></el-table-column>
                   <el-table-column prop="toname" label="到达点" width="120"></el-table-column>
                   <el-table-column prop="efficiency" label="拥挤度" width="90"></el-table-column>
-                  <!--
-                  <el-table-column prop="" label="length" width="90"></el-table-column>
-                  <el-table-column prop="" label="transit time" width="90"></el-table-column>
-                  <el-table-column prop="" label="crowdedness" width="90"></el-table-column>
-                  -->
                   <el-table-column label="操作" width="180">
                     <template slot-scope="scope">
                       <el-button size="mini" @click="editPaths(scope.$index, scope.row)">edit</el-button>
@@ -187,6 +178,20 @@
                     <template slot-scope="scope">
                       <el-button size="mini" @click="editVehiclesTimetable(scope.$index, scope.row)">edit</el-button>
                       <el-button size="mini" type="danger" @click="deleteVehiclesTimetable(scope.$index, scope.row)">delete</el-button>
+                    </template>
+                  </el-table-column>
+                </el-table>
+              </el-tab-pane>
+              <el-tab-pane label="食堂">
+                <el-table :data="canteenTable" height="500" stripe style="width: 100%">
+                  <el-table-column prop="name" label="名称" width="120"></el-table-column>
+                  <el-table-column prop="type" label="类型" width="100"></el-table-column>
+                  <el-table-column prop="description" label="标签" width="90"></el-table-column>
+                  <el-table-column prop="count" label="人流量" width="70"></el-table-column>
+                  <el-table-column label="操作" width="90">
+                    <template slot-scope="scope">
+                      <el-button size="mini" @click="navigateForm.departure = scope.row.id">设为起点</el-button><br/>
+                      <el-button size="mini" @click="navigateForm.arrival = scope.row.id, setNavigate()">设为终点</el-button>
                     </template>
                   </el-table-column>
                 </el-table>
@@ -368,6 +373,7 @@ export default {
       nearby: [],
       routeData: [{fromid: 0}],
       schoolBusTimetable: [],
+      canteenTable: [],
       travelersStatus: [],
       travelersPlans: [],
       log: [],
@@ -584,6 +590,12 @@ export default {
           console.log('error', err)
         })
     },
+    getCanteenTable(){
+      this.$axios.get('/api/table/cateen')
+        .then(res => {
+          this.canteenTable = res.data.data
+        })
+    },
     addVehiclesTimetable() {
       this.$axios.post(`/api/vehicles/timetable?number=${this.vehiclesTimetableForm.number}&type=${this.vehiclesTimetableForm.type}&departure=${this.vehiclesTimetableForm.departure}&departuretime=${this.vehiclesTimetableForm.departureTime}&arrival=${this.vehiclesTimetableForm.arrival}&arrivaltime=${this.vehiclesTimetableForm.arrivalTime}&risk=${this.vehiclesTimetableForm.risk}`)// !
         .then(res => {
@@ -614,6 +626,7 @@ export default {
     },
     getAllData() {
       this.getSchoolBusTimetable()
+      this.getCanteenTable()
       this.getFacilitys()
       this.getFacilitysWithoutType0()
       this.getPaths()
@@ -717,6 +730,7 @@ export default {
     initAnimation() {
       this.$axios.post(`/api/plan?startid=${this.navigateForm.departure}&endid=${this.navigateForm.arrival}&type=${this.navigateForm.strategy.strategy}&hour=${this.backendTime.hour}&minute=${this.backendTime.minute}&second=${this.backendTime.second}`, this.navigateForm.strategy.pathpoints)
         .then(res => {
+          this.getCanteenTable(); // update cateen flows
           lineString.setCoordinates([]);
           pathWeight=[];
           pathWeightSum=[0.];

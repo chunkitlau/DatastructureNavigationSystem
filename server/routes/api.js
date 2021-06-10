@@ -20,6 +20,7 @@ const {
   getLog,
 } = require('../controller/utils')
 const { addLog, dumpLog } = require('../controller/log')
+const { getCanteens } = require('../controller/flow')
 const { SuccessModel, ErrorModel } = require('../model/resModel')
 const { getShortestPath, getPassbyShortestPath } = require('../controller/model.js')
 const { SBplans } = require('../config/schoolBusTimetable')
@@ -43,6 +44,7 @@ router.get('/', function (req, res, next) {
     get    /current/time<br>
     get    /current/state<br>
     get    /timetable/schoolbus<br>
+    get    /table/cateen<br>
     get    /log<br>
     post   /log?str=<br>
 
@@ -177,6 +179,13 @@ router.post('/log', function (req, res, next) {
 router.get('/log', function (req, res, next) {
   const result = dumpLog()
   res.json(new SuccessModel(result))
+})
+
+router.get('/table/cateen', function (req, res, next) {
+  const promise = getCanteens()
+  promise.then(result => {
+    res.json(new SuccessModel(result))
+  })
 })
 
 module.exports = router

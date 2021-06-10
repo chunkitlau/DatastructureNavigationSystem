@@ -1,4 +1,3 @@
-const xss = require('xss')
 const { exec } = require('../database/mysql')
 const { Dijkstra, Dijkstra_initial } = require('./model')
 
@@ -31,10 +30,10 @@ const getFacilitys = (desc, positon) => {
         var leastDistance = Dijkstra(startID, endIDs, 0)
         var leastTime = Dijkstra(startID, endIDs, 3)
         for (let i = 0; i < res.length; i++) {
-          if (leastDistance.endDot.id == res[i].id) {
+          if (leastDistance.endDot != undefined && leastDistance.endDot.id == res[i].id) {
             res[i].key = 0
             res[i].description = res[i].description + '（最近距离）'
-          } else if (leastTime.endDot.id == res[i].id) {
+          } else if (leastTime.endDot != undefined && leastTime.endDot.id == res[i].id) {
             res[i].key = 1
             res[i].description = res[i].description + '（最短时间）'
           } else res[i].key = res[i].id + 2
@@ -44,8 +43,8 @@ const getFacilitys = (desc, positon) => {
         }
         res.sort(cmpDot)
         resolve(res)
-      })
-    })
+      }, null)
+    }, null)
     return promise
   }
 }

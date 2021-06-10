@@ -3,7 +3,6 @@
     <el-container>
       <el-main>
         <div id="map" class="map" style="width: 100%; height: 660px; border: 2px solid black; "></div>
-        <!-- <div id="geo-marker"></div> -->
         <div style="display: none;">
           <!-- Popup -->
           <div id="popup" title=""></div>
@@ -239,7 +238,6 @@ function trans(location){
 
 // 采点
 var lastclick = [[0,0],[0,0]], lastclickp = 1;
-// var markerEl,marker;
 var positionSearch;
 
 // 点表和边表
@@ -273,6 +271,10 @@ var mapView = new ol.View({
 
 // ol样式
 var imgIcon = require('./data/icon.png');
+var markerImg0 = require('./data/0.png');
+var markerImg1 = require('./data/1.png');
+var markerImg2 = require('./data/2.png');
+var markerImg3 = require('./data/3.png');
 var styles = {
   'route': new ol.style.Style({
     stroke: new ol.style.Stroke({
@@ -302,7 +304,6 @@ var styles = {
     }),
     zIndex: 4
   })],
-
   'geoMarker': new ol.style.Style({
     image: new ol.style.Circle({
       radius: 7,
@@ -312,8 +313,35 @@ var styles = {
         width: 2,
       }),
     }),
-  }),
+  })
 };
+
+var markerStyles=[
+  new ol.style.Style({
+    image: new ol.style.Icon({
+      src: markerImg0,
+      scale: 0.25
+    })
+  }),
+  new ol.style.Style({
+    image: new ol.style.Icon({
+      src: markerImg1,
+      scale: 0.25
+    })
+  }),
+  new ol.style.Style({
+    image: new ol.style.Icon({
+      src: markerImg2,
+      scale: 0.25
+    })
+  }),
+  new ol.style.Style({
+    image: new ol.style.Icon({
+      src: markerImg3,
+      scale: 0.25
+    })
+  })
+];
 
 // 目前的一些features基本上都是往sourceFeatures里面加的
 var sourceFeatures = new ol.source.Vector();
@@ -767,12 +795,15 @@ export default {
             pathWeightSum.push(pathWeightSum[i]+pathWeight[i]);
             pathType.push(this.routeData[i].type);
           }
-          console.log(pathType);
           startMarker.setGeometry(new ol.geom.Point(polyline[0]));
           startMarker.setStyle(styles['icon']);
           geoMarker=new ol.geom.Point(polyline[0]);
           geoMarkerFeature.setGeometry(geoMarker);
-          geoMarkerFeature.setStyle(styles['geoMarker']);
+          if(this.navigateForm.strategy.strategy==='3'){
+            geoMarkerFeature.setStyle(markerStyles[pathType[0]]);
+          }else{
+            geoMarkerFeature.setStyle(styles['geoMarker']);
+          }
           stopMarker.setGeometry(new ol.geom.Point(polyline[polyline.length-1]));
           stopMarker.setStyle(styles['icon']);
           route=new ol.geom.LineString(polyline);
@@ -908,6 +939,11 @@ export default {
         displayLine.push(internalMarker);
         lineString.setCoordinates(displayLine);
         geoMarker.setCoordinates(internalMarker);
+        if(self.navigateForm.strategy.strategy==='3'){
+          geoMarkerFeature.setStyle(markerStyles[pathType[self.posisiontNow]]);
+        }else{
+          geoMarkerFeature.setStyle(styles['geoMarker']);
+        }
         mapView.setCenter(internalMarker);
         map.setView(mapView);
         self.currentTime += deltaTtime / 1000.0 * 6 * 5;
@@ -948,15 +984,6 @@ export default {
   body{
     font-family: "Helvetica Neue",Helvetica,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","微软雅黑",Arial,sans-serif;
   }
-  #marker {
-    width: 20px;
-    height: 20px;
-    border: 1px solid #088;
-    border-radius: 10px;
-    background-color: #0FF;
-    opacity: 0.5;
-  }
-
   #vienna {
     text-decoration: none;
     color: white;
@@ -967,14 +994,5 @@ export default {
 
   .popover-body {
     min-width: 276px;
-  }
-
-  #geo-marker {
-    width: 10px;
-    height: 10px;
-    border: 1px solid #088;
-    border-radius: 5px;
-    background-color: #0b968f;
-    opacity: 0.8;
   }
 </style>

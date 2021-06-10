@@ -11,17 +11,17 @@ const updateFacility = (id, name, type, description) => {
   return exec(sql)
 }
 
-const getFacilitys = (desc, positon) => {
+const getFacilitys = (desc, position) => {
   if (desc == undefined) {
     const sql = `select * from dottable where type != 0`
     return exec(sql)
-  } else if (positon == undefined) {
+  } else if (position == undefined) {
     const sql = `select * from dottable where name REGEXP '${desc}' and type != 0 union select * from dottable where description REGEXP '${desc}' and type != 0;`
     return exec(sql)
   } else {
     const promise = new Promise((resolve, reject) => {
       const sql = `select * from dottable where name REGEXP '${desc}' and type != 0 union select * from dottable where description REGEXP '${desc}' and type != 0;`
-      var p1List = [getFacilitysAround(positon), exec(sql), Dijkstra_initial()]
+      var p1List = [getFacilitysAround(position), exec(sql), Dijkstra_initial()]
       Promise.all(p1List).then(values => {
         res = values[1]
         const startID = values[0][0].id

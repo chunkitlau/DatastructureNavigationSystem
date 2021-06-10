@@ -17,7 +17,7 @@ var mapEdge = new Array()
 var mapDot = new Array()
 
 /**
- * Manual priority queue for {id, dist}
+ * Manual priority queue for {id, dist, weight}
  */
 class PriorityQueue {
   // tree[0] is empty!
@@ -35,10 +35,10 @@ class PriorityQueue {
   empty = () => !this.length
 
   push(val) {
-    // val: {id: , dist: }
+    // val: {id: number, dist: double, weight: double}
     this.tree[++this.length] = val
     let index = this.length
-    while (index != 1 && this._compare(val.dist, this.tree[this.father(index)].dist)) {
+    while (index != 1 && this._compare(val.weight, this.tree[this.father(index)].weight)) {
       this._swap(index, this.father(index))
       index = this.father(index)
     }
@@ -53,11 +53,11 @@ class PriorityQueue {
     while (this.left(index) <= this.length) {
       if (
         this.right(index) <= this.length &&
-        this._compare(this.tree[this.right(index)].dist, this.tree[this.left(index)].dist)
+        this._compare(this.tree[this.right(index)].weight, this.tree[this.left(index)].weight)
       )
         tmp = this.right(index)
       else tmp = this.left(index)
-      if (this._compare(this.tree[tmp].dist, this.tree[index].dist)) {
+      if (this._compare(this.tree[tmp].weight, this.tree[index].weight)) {
         this._swap(tmp, index)
         index = tmp
       } else break
@@ -129,10 +129,13 @@ const Dist = (dotA, dotB) => {
 const calcCost = (dotA, dotB, edge, strategy) => {
   let speed
   let efficiency = 1
+
   if (strategy == 0 || strategy == 2) speed = 1
   else if (strategy == 1) speed = SPEED[0]
   else speed = SPEED[edge.type]
+
   if (strategy == 1 || strategy == 3) efficiency = edge.efficiency
+
   return (Dist(dotA, dotB) / speed) * efficiency
 }
 
@@ -182,29 +185,100 @@ const Dijkstra_initial = () => {
  * @param {number} startDotID departure dot ID
  * @param {number} endDotIDs arrival dots ID
  * @param {number} strategy strategy to move
- * @returns {object{number, {Array}, Dot}} {answer, path} time cost and path for current plan
+ * @returns {object{number, {Array}, Dot}} {answer, path, endDot} time cost and path for current plan
  * Answer saved into pathtoLoc
  */
 const Dijkstra = (startDotID, endDotIDs, strategy) => {
   if (DEBUG) console.log(`Running DIJ: start: ${startDotID}, end: ${endDotIDs}, strategy: ${strategy}`)
   var pq = new PriorityQueue()
   var befEdge = new Array()
+  var weight = new Array()
+  var answer = 0
+  var endDot
+  var pathToLoc = new Array()
+  var nowState, nextState
+
+  pq.push({ id: startDotID, dist: 0, weight: 0 })
+  weight[startDotID] = 0
+  while (!pq.empty()) {
+    nowState = pq.top()
+    pq.pop()
+    if (weight[nowState.id] == undefined || weight[nowState.id] < nowState.weight) {
+      continue
+    }
+    weight[nowState.id] = nowState.weight
+    if (endDotIDs.indexOf(nowState.id) != -1) {
+      if (DEBUG) console.log(`endDot detected.`)
+      let index = nowState.id
+      let tmp
+      answer = weight[index]
+      endDot = dots[mapDot[nowState.id]]
+      while (index != startDotID) {
+        tmp = befEdge[index]
+        pathToLoc.push({
+          id: tmp.id % edges[edgeNum - 1].id,
+          type: tmp.type,
+          fromid: tmp.fromid,
+          toid: tmp.toid,
+          efficiency: tmp.efficiency,
+          dist: weight[tmp.toid] - weight[tmp.fromid],
+        })
+        index = befEdge[index].fromid
+      }
+      break
+    }
+    if (DEBUG_DETAIL) console.log(`now state: ${nowState.id}, ${nowState.dist}, ${nowState.weight}`)
+    for (var nowEdge = firstEdge[nowState.id]; nowEdge != null; nowEdge = nextEdge[nowEdge]) {
+      // if (DEBUG_DETAIL) console.log(`next dot ${edges[nowEdge].toid}: ${dots[mapDot[edges[nowEdge].toid]].name}`)
+      nextState = {
+        id: edges[nowEdge].toid,
+        dist:
+          nowState.dist +
+          calcCost(dots[mapDot[edges[nowEdge].fromid]], dots[mapDot[edges[nowEdge].toid]], edges[nowEdge], 0),
+        weight:
+          nowState.weight +
+          calcCost(dots[mapDot[edges[nowEdge].fromid]], dots[mapDot[edges[nowEdge].toid]], edges[nowEdge], strategy),
+      }
+      if (weight[nextState.id] == undefined || weight[nextState.id] > nextState.weight) {
+        if (DEBUG_DETAIL) console.log(`push ${nextState.id}, ${nextState.dist}, ${nextState.weight}`)
+        befEdge[nextState.id] = edges[nowEdge]
+        weight[nextState.id] = nextState.weight
+        pq.push(nextState)
+      }
+    }
+  }
+  return { answer: answer, path: pathToLoc.reverse(), endDot: endDot }
+}
+
+/**
+ * shortest path algorithm used only in ***nearest distance*** solution
+ * @param {number} startDotID departure dot ID
+ * @param {number} endDotID arrival dot ID
+ * @returns {object{number, {Array}, Dot}} {answer, path, endDot} time cost and path for current plan
+ */
+const A_star = (startDotID, endDotID) => {
+  if (DEBUG) console.log(`Running A-star: start: ${startDotID}, end: ${endDotID}`)
+  var pq = new PriorityQueue()
+  var befEdge = new Array()
+  var weight = new Array()
   var dist = new Array()
   var answer = 0
   var endDot
   var pathToLoc = new Array()
   var nowState, nextState
 
-  pq.push({ id: startDotID, dist: 0 })
+  pq.push({ id: startDotID, dist: 0, weight: 0 })
+  weight[startDotID] = 0
   dist[startDotID] = 0
   while (!pq.empty()) {
     nowState = pq.top()
     pq.pop()
-    if (dist[nowState.id] == undefined || dist[nowState.id] < nowState.dist) {
+    if (weight[nowState.id] == undefined || weight[nowState.id] < nowState.weight) {
       continue
     }
+    weight[nowState.id] = nowState.weight
     dist[nowState.id] = nowState.dist
-    if (endDotIDs.indexOf(nowState.id) != -1) {
+    if (nowState.id == endDotID) {
       if (DEBUG) console.log(`endDot detected.`)
       let index = nowState.id
       let tmp
@@ -224,18 +298,23 @@ const Dijkstra = (startDotID, endDotIDs, strategy) => {
       }
       break
     }
-    if (DEBUG_DETAIL) console.log(`now state: ${nowState.id}, ${nowState.dist}`)
+    if (DEBUG_DETAIL) console.log(`now state: ${nowState.id}, ${nowState.dist}, ${nowState.weight}`)
     for (var nowEdge = firstEdge[nowState.id]; nowEdge != null; nowEdge = nextEdge[nowEdge]) {
       // if (DEBUG_DETAIL) console.log(`next dot ${edges[nowEdge].toid}: ${dots[mapDot[edges[nowEdge].toid]].name}`)
       nextState = {
         id: edges[nowEdge].toid,
         dist:
           nowState.dist +
-          calcCost(dots[mapDot[edges[nowEdge].fromid]], dots[mapDot[edges[nowEdge].toid]], edges[nowEdge], strategy),
+          calcCost(dots[mapDot[edges[nowEdge].fromid]], dots[mapDot[edges[nowEdge].toid]], edges[nowEdge], 0),
+        weight:
+          nowState.weight +
+          calcCost(dots[mapDot[edges[nowEdge].fromid]], dots[mapDot[edges[nowEdge].toid]], edges[nowEdge], 0) +
+          Dist(dots[mapDot[edges[nowEdge].toid]], dots[mapDot[endDotID]]),
       }
-      if (dist[nextState.id] == undefined || dist[nextState.id] > nextState.dist) {
-        if (DEBUG_DETAIL) console.log(`push ${nextState.id},${nextState.dist}`)
+      if (weight[nextState.id] == undefined || weight[nextState.id] > nextState.weight) {
+        if (DEBUG_DETAIL) console.log(`push ${nextState.id}, ${nextState.dist}, ${nextState.weight}`)
         befEdge[nextState.id] = edges[nowEdge]
+        weight[nextState.id] = nextState.weight
         dist[nextState.id] = nextState.dist
         pq.push(nextState)
       }
@@ -374,7 +453,7 @@ const getShortestPath = (startDotID, endDotID, strategy, startTime) => {
 }
 
 /**
- *
+ * shortest path with multiple passby points (Caution: must be in SAME campus and use least distance strategy)
  * @param {number} startDotID departure dot ID
  * @param {number} endDotID arrival dot ID
  * @param {[numbers]} passbysID list of dots passing by
@@ -392,7 +471,7 @@ const getPassbyShortestPath = (startDotID, endDotID, passbysID) => {
       passbysID.push(endDotID)
       for (var i = 0; i < passbysID.length; i++) {
         endDotID = passbysID[i]
-        result = Dijkstra(startDotID, [endDotID], 2) // walking
+        result = A_star(startDotID, endDotID) // walking
         answer += result.answer
         path = path.concat(result.path)
         startDotID = endDotID

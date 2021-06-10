@@ -66,8 +66,8 @@ router.get('/facility', function (req, res, next) {
 
 router.get('/facilitys', function (req, res, next) {
   const desc = req.query.description
-  const positon = req.query.position
-  const result = getFacilitys(desc, positon)
+  const position = req.query.position
+  const result = getFacilitys(desc, position)
   return result.then(result => {
     res.json(new SuccessModel(result))
   })

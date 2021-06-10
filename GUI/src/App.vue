@@ -992,7 +992,6 @@ export default {
         displayLine.push(internalMarker);
         lineString.setCoordinates(displayLine);
         self.addLog(self.getTimeStamp() + 'position now ' + JSON.stringify(internalMarker));
-        marker.setPosition(internalMarker);
         geoMarker.setCoordinates(internalMarker);
         if(self.navigateForm.strategy.strategy==='3'){
           geoMarkerFeature.setStyle(markerStyles[pathType[self.posisiontNow]]);

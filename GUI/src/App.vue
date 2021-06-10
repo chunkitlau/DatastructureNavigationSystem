@@ -3,7 +3,6 @@
     <el-container>
       <el-main>
         <div id="map" class="map" style="width: 100%; height: 660px; border: 2px solid black; "></div>
-        <div id="geo-marker"></div>
         <div style="display: none;">
           <!-- Popup -->
           <div id="popup" title=""></div>
@@ -25,7 +24,7 @@
               </el-col>
             </el-row>
             <el-row :gutter="20">
-            <el-col :span="12" :offset="0"><span>路线时间: {{ Math.floor(currentTime / 3600) }} hour {{ Math.floor(currentTime / 60) }} minute {{ Math.floor(currentTime) % 60 }} second</span><br></el-col>
+            <el-col :span="12" :offset="0"><span>路线时间: {{ Math.floor((currentTime+currentTimeOffset) / 3600) }} hour {{ Math.floor((currentTime+currentTimeOffset) / 60) % 60 }} minute {{ Math.floor((currentTime+currentTimeOffset)) % 60 }} second</span><br></el-col>
             <el-col :span="12" :offset="0"><span>经过位置: {{ currentPositionName }} </span></el-col>
             </el-row>
             <el-row :gutter="20">
@@ -45,6 +44,7 @@
               <el-button @click="setNavigateFormVisible = true" type="primary" icon="el-icon-s-promotion">navigate</el-button>
               <el-button @click="addFacilityFormVisible = true" type="primary" icon="el-icon-circle-plus-outline">add facility</el-button>
               <el-button @click="addRoadFormVisible = true" type="primary" icon="el-icon-circle-plus-outline">add road</el-button>
+              <el-button @click="getLog" type="primary" icon="el-icon-download">download log</el-button>
               <el-dialog title="navigate" :visible.sync="setNavigateFormVisible">
                 <el-form :model="navigateForm">
                   <el-form-item label="departure" :label-width="formLabelWidth">
@@ -239,7 +239,6 @@ function trans(location){
 
 // 采点
 var lastclick = [[0,0],[0,0]], lastclickp = 1;
-var markerEl,marker;
 var positionSearch;
 
 // 点表和边表
@@ -266,9 +265,17 @@ var buptCampusValue = 0;
 var detailValue = 1;
 var buptCampusView = [buptMainCampus, buptShaheCampus, buptCampus];
 
-var mapView = buptCampusView[buptCampusValue];
+var mapView = new ol.View({
+  center: [12948425, 4875300],
+  zoom: 11.7
+});
 
 // ol样式
+var imgIcon = require('./data/icon.png');
+var markerImg0 = require('./data/0.png');
+var markerImg1 = require('./data/1.png');
+var markerImg2 = require('./data/2.png');
+var markerImg3 = require('./data/3.png');
 var styles = {
   'route': new ol.style.Style({
     stroke: new ol.style.Stroke({
@@ -288,7 +295,7 @@ var styles = {
       rotateWithView: false,
       anchorXUnits: 'fraction', anchorYUnits: 'fraction',
       anchor: [0.5, 1],
-      src: '//raw.githubusercontent.com/jonataswalker/map-utils/master/images/marker.png',
+      src: imgIcon,
     }),
     zIndex: 5
   }),new ol.style.Style({
@@ -298,7 +305,6 @@ var styles = {
     }),
     zIndex: 4
   })],
-
   'geoMarker': new ol.style.Style({
     image: new ol.style.Circle({
       radius: 7,
@@ -308,8 +314,35 @@ var styles = {
         width: 2,
       }),
     }),
-  }),
+  })
 };
+
+var markerStyles=[
+  new ol.style.Style({
+    image: new ol.style.Icon({
+      src: markerImg0,
+      scale: 0.25
+    })
+  }),
+  new ol.style.Style({
+    image: new ol.style.Icon({
+      src: markerImg1,
+      scale: 0.25
+    })
+  }),
+  new ol.style.Style({
+    image: new ol.style.Icon({
+      src: markerImg2,
+      scale: 0.25
+    })
+  }),
+  new ol.style.Style({
+    image: new ol.style.Icon({
+      src: markerImg3,
+      scale: 0.25
+    })
+  })
+];
 
 // 目前的一些features基本上都是往sourceFeatures里面加的
 var sourceFeatures = new ol.source.Vector();
@@ -324,17 +357,23 @@ var startMarker = new ol.Feature(), stopMarker=new ol.Feature();
 var lineStringFeature = new ol.Feature();
 var lineString=new ol.geom.LineString([]);
 
+var geoMarker;
+var geoMarkerFeature=new ol.Feature();
+
 // 导航layer
-var routeLayer=new ol.layer.Vector({
-  source: new ol.source.Vector({
-    features: [routeFeature,startMarker,stopMarker,lineStringFeature]
-  })
+var routeSource=new ol.source.Vector({
+  features: [routeFeature,startMarker,stopMarker,lineStringFeature, geoMarkerFeature]
 });
+var routeLayer=new ol.layer.Vector({source: routeSource});
+
+// 室内导航相关
+var indoorFeatures=new ol.source.Vector();
+var indoorLayer=new ol.layer.Vector({source: indoorFeatures});
 
 var isPlay = false, isInitAnimation = false;
 var deltaTtime = 25.0;
 var polyline = null;
-var pathWeight = [], pathWeightSum =[];
+var pathWeight = [], pathWeightSum =[], pathType=[];
 
 var internalMarker = '';
 
@@ -347,6 +386,7 @@ export default {
     return {
       map: null,
       currentTime: 0,
+      currentTimeOffset: 0,
       initialTime: new Date(2021, 5, 20, 8, 0),
       backendTime: { hour: 8, minute: 0, second: 0 },
       timeCount: 0,
@@ -397,7 +437,7 @@ export default {
         }, {
           value: '3',
           label: '交通工具的最短时间策略'
-        }],
+      }]
     }
   },
   computed: {
@@ -427,7 +467,7 @@ export default {
     },
   },
   watch: {
-    // 如果 `question` 发生改变，这个函数就会运行
+    // 如果 `buptCampusValue` 发生改变，这个函数就会运行
     buptCampusValue: function (newBuptCampusValue, oldBuptCampusValue) {
       buptCampusValue = Number(newBuptCampusValue);
       map.setView(buptCampusView[buptCampusValue]);
@@ -441,7 +481,21 @@ export default {
     getLog() {
       this.$axios.get(`/api/log`)// !
       .then(res => {
-        console.log(res);
+        let filename = 'log.txt';
+        let content = '';
+        let log = res.data.data;
+        for (let item of log) {
+          content = content + item + '\n';
+        }
+        //console.log(content);
+        const eleLink = document.createElement('a');
+        eleLink.download = filename;
+        eleLink.style.display = 'none';
+        const blob = new Blob([content]);
+        eleLink.href = URL.createObjectURL(blob);
+        document.body.appendChild(eleLink);
+        eleLink.click();
+        document.body.removeChild(eleLink);
       })
       .catch(err => {
         console.log('error', err)
@@ -674,7 +728,6 @@ export default {
       if(!detailValue) { // hide layers
         console.log("triggered!");
         sourceFeatures.clear();
-        // map.removeLayer(layerEdge);
         return;
       }
       
@@ -706,28 +759,22 @@ export default {
           trans(fromLoc),trans(toLoc)
         );
         var line=new ol.geom.LineString(points);
-        var layerEdge = new ol.layer.Vector({
-          source: new ol.source.Vector({
-            features: [
-              new ol.Feature({ geometry: line })
-            ]
-          }),
-          style: [
-            new ol.style.Style({
-              stroke: new ol.style.Stroke({
-                width: 3,
-                color: edgeColor[edgeTable[i].type],
-                lineDash: [.1, 5]
-              }),
-              text: new ol.style.Text({
-                font: '16px sans-serif',
-                text: edgeTable[i].id,
-                fill: new ol.style.Fill({color: '#000'})
-              })
+        var feature =new ol.Feature({ geometry: line });
+        feature.setStyle(
+          new ol.style.Style({
+            stroke: new ol.style.Stroke({
+              width: 3,
+              color: edgeColor[edgeTable[i].type],
+              lineDash: [.1, 5]
+            }),
+            text: new ol.style.Text({
+              font: '16px sans-serif',
+              text: edgeTable[i].id,
+              fill: new ol.style.Fill({color: '#000'})
             })
-          ]
-        });
-        map.addLayer(layerEdge);
+          })
+        );
+        sourceFeatures.addFeatures([feature]);
       }
     },
     getNearby(location, distance) {
@@ -778,6 +825,7 @@ export default {
           lineString.setCoordinates([]);
           pathWeight=[];
           pathWeightSum=[0.];
+          pathType=[];
           this.routeData=res.data.data.path;
           for (let index=0,len=this.routeData.length; index<len; ++index) {
             this.routeData[index].fromname = this.facilitys.find(item=>item.id===this.routeData[index].fromid).name
@@ -788,10 +836,18 @@ export default {
             polyline.push(trans(dotTable.find(o=>o.id===this.routeData[i].toid).location));
             pathWeight.push(this.routeData[i].dist);
             pathWeightSum.push(pathWeightSum[i]+pathWeight[i]);
+            pathType.push(this.routeData[i].type);
           }
+          console.log(polyline);
           startMarker.setGeometry(new ol.geom.Point(polyline[0]));
           startMarker.setStyle(styles['icon']);
-          marker.setPosition(polyline[0]);
+          geoMarker=new ol.geom.Point(polyline[0]);
+          geoMarkerFeature.setGeometry(geoMarker);
+          if(this.navigateForm.strategy.strategy==='3'){
+            geoMarkerFeature.setStyle(markerStyles[pathType[0]]);
+          }else{
+            geoMarkerFeature.setStyle(styles['geoMarker']);
+          }
           stopMarker.setGeometry(new ol.geom.Point(polyline[polyline.length-1]));
           stopMarker.setStyle(styles['icon']);
           route=new ol.geom.LineString(polyline);
@@ -799,6 +855,7 @@ export default {
           routeFeature.setStyle(styles['route']);
           lineStringFeature.setGeometry(lineString);
           lineStringFeature.setStyle(styles['route1']);
+          map.setView(mapView);
           mapView.setZoom(18.0);
           mapView.setCenter(polyline[0]);
         }).catch(err => {
@@ -822,8 +879,9 @@ export default {
       isPlay = false;
       this.posisiontNow = 0;
       this.currentTime = 0;
+      this.currentTimeOffset = 0;
       lineString.setCoordinates(polyline.slice(0,this.posisiontNow+1));
-      marker.setPosition(polyline[this.posisiontNow]);
+      geoMarker.setCoordinates(polyline[this.posisiontNow]);
     },
   },
   created() {
@@ -874,7 +932,7 @@ export default {
           source: new ol.source.OSM(),
           opacity: 0.6
         }),
-        layerFeatures, routeLayer
+        layerFeatures, routeLayer, indoorLayer
       ]
     });
 
@@ -908,19 +966,15 @@ export default {
       });
       $(element).popover('show');
     });
-    
-    markerEl = document.getElementById('geo-marker');
-    marker = new ol.Overlay({
-      offset: [-9, -5],
-      element: markerEl,
-      stopEvent: false
-    });
-    map.addOverlay(marker);
 
     //fire the animation
     var animation = function () {
       if (isPlay && polyline != null && self.posisiontNow < polyline.length) {
         while(self.currentTime > pathWeightSum[self.posisiontNow + 1]){
+          if(Math.abs(polyline[self.posisiontNow+1][1]-polyline[self.posisiontNow][1])>15000){
+            self.backendTime.hour+=2;
+            self.currentTimeOffset=7200;
+          }
           self.posisiontNow++;
         }
         if(pathWeightSum[self.posisiontNow + 1] == undefined && self.currentTime >= pathWeightSum[self.posisiontNow]) {
@@ -937,9 +991,16 @@ export default {
         ];
         displayLine.push(internalMarker);
         lineString.setCoordinates(displayLine);
-        this.addLog(this.getTimeStamp() + 'position now ' + JSON.stringify(internalMarker));
+        self.addLog(self.getTimeStamp() + 'position now ' + JSON.stringify(internalMarker));
         marker.setPosition(internalMarker);
+        geoMarker.setCoordinates(internalMarker);
+        if(self.navigateForm.strategy.strategy==='3'){
+          geoMarkerFeature.setStyle(markerStyles[pathType[self.posisiontNow]]);
+        }else{
+          geoMarkerFeature.setStyle(styles['geoMarker']);
+        }
         mapView.setCenter(internalMarker);
+        map.setView(mapView);
         self.currentTime += deltaTtime / 1000.0 * 6 * 5;
         if(++self.timeCount % 10 == 0)
           self.getNearby(transform(internalMarker, 'EPSG:3857' ,'EPSG:4326'), 50)
@@ -964,7 +1025,7 @@ export default {
         // text: new ol.style.Text({text: indoorData.elements[i].tags.name,fill:new ol.style.Fill({color: "#999999"})})
       });
       feature.setStyle(polygonStyle);
-      sourceFeatures.addFeatures([feature]);
+      indoorFeatures.addFeatures([feature]);
     }
   },
   updated() {
@@ -978,15 +1039,6 @@ export default {
   body{
     font-family: "Helvetica Neue",Helvetica,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","微软雅黑",Arial,sans-serif;
   }
-  #marker {
-    width: 20px;
-    height: 20px;
-    border: 1px solid #088;
-    border-radius: 10px;
-    background-color: #0FF;
-    opacity: 0.5;
-  }
-
   #vienna {
     text-decoration: none;
     color: white;
@@ -997,14 +1049,5 @@ export default {
 
   .popover-body {
     min-width: 276px;
-  }
-
-  #geo-marker {
-    width: 10px;
-    height: 10px;
-    border: 1px solid #088;
-    border-radius: 5px;
-    background-color: #0b968f;
-    opacity: 0.8;
   }
 </style>

@@ -24,7 +24,7 @@
               </el-col>
             </el-row>
             <el-row :gutter="20">
-            <el-col :span="12" :offset="0"><span>路线时间: {{ Math.floor(currentTime / 3600) }} hour {{ Math.floor(currentTime / 60) }} minute {{ Math.floor(currentTime) % 60 }} second</span><br></el-col>
+            <el-col :span="12" :offset="0"><span>路线时间: {{ Math.floor((currentTime+currentTimeOffset) / 3600) }} hour {{ Math.floor((currentTime+currentTimeOffset) / 60) % 60 }} minute {{ Math.floor((currentTime+currentTimeOffset)) % 60 }} second</span><br></el-col>
             <el-col :span="12" :offset="0"><span>经过位置: {{ currentPositionName }} </span></el-col>
             </el-row>
             <el-row :gutter="20">
@@ -385,6 +385,7 @@ export default {
     return {
       map: null,
       currentTime: 0,
+      currentTimeOffset: 0,
       initialTime: new Date(2021, 5, 20, 8, 0),
       backendTime: { hour: 8, minute: 0, second: 0 },
       timeCount: 0,
@@ -798,6 +799,7 @@ export default {
             pathWeightSum.push(pathWeightSum[i]+pathWeight[i]);
             pathType.push(this.routeData[i].type);
           }
+          console.log(polyline);
           startMarker.setGeometry(new ol.geom.Point(polyline[0]));
           startMarker.setStyle(styles['icon']);
           geoMarker=new ol.geom.Point(polyline[0]);
@@ -834,6 +836,7 @@ export default {
       isPlay = false;
       this.posisiontNow = 0;
       this.currentTime = 0;
+      this.currentTimeOffset = 0;
       lineString.setCoordinates(polyline.slice(0,this.posisiontNow+1));
       geoMarker.setCoordinates(polyline[this.posisiontNow]);
     },
@@ -925,6 +928,10 @@ export default {
     var animation = function () {
       if (isPlay && polyline != null && self.posisiontNow < polyline.length) {
         while(self.currentTime > pathWeightSum[self.posisiontNow + 1]){
+          if(Math.abs(polyline[self.posisiontNow+1][1]-polyline[self.posisiontNow][1])>15000){
+            self.backendTime.hour+=2;
+            self.currentTimeOffset=7200;
+          }
           self.posisiontNow++;
         }
         if(pathWeightSum[self.posisiontNow + 1] == undefined && self.currentTime >= pathWeightSum[self.posisiontNow]) {

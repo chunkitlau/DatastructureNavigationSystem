@@ -1,7 +1,6 @@
 const { exec } = require('../database/mysql')
 const { SBplans, SBterminal, RWterminal } = require('../config/schoolBusTimetable')
 const { DIST_BETWEEN_CAMPUS, BUS_TIME, RAILWAY_TIME, DEFAULT_RADIUS, SPEED } = require('../config/constants')
-const { getFacilitysAround } = require('./utils')
 
 const DEBUG = 0
 const TEST = 0
@@ -135,6 +134,7 @@ const calcCost = (dotA, dotB, edge, strategy) => {
   if (strategy == 1 || strategy == 3) efficiency = edge.efficiency
   return (Dist(dotA, dotB) / speed) * efficiency
 }
+
 /**
  * get ready for dijkstra algorithm
  */

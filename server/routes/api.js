@@ -1,8 +1,6 @@
 var express = require('express')
 var router = express.Router()
 const {
-  getCurrentTime,
-  getCurrentState,
   createFacility,
   getFacility,
   getFacilitys,
@@ -164,16 +162,6 @@ router.post('/plan', function (req, res, next) {
   return result.then(result => {
     res.json(new SuccessModel(result))
   })
-})
-
-router.get('/current/time', function (req, res, next) {
-  const result = getCurrentTime()
-  res.json(new SuccessModel(result))
-})
-
-router.get('/currnet/state', function (req, res, next) {
-  const result = getCurrentState()
-  res.json(new SuccessModel(result))
 })
 
 router.get('/timetable/schoolbus', function (req, res, nex) {

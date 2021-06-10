@@ -438,6 +438,27 @@ export default {
     }
   },
   methods: {
+    getLog() {
+      this.$axios.get(`/api/log`)// !
+      .then(res => {
+        console.log(res);
+      })
+      .catch(err => {
+        console.log('error', err)
+      })
+    },
+    getTimeStamp() {
+      return this.backendTime.hour + ':' + this.backendTime.minute + ':' + this.backendTime.second + ' ';
+    },
+    addLog(str) {
+      this.$axios.post(`/api/log?str=${str}`)// !
+      .then(res => {
+        
+      })
+      .catch(err => {
+        console.log('error', err)
+      })
+    },
     searchFacilitys(query) {
       if (query !== '') {
         if (isPlay) {
@@ -486,6 +507,7 @@ export default {
       });
     },
     setNavigate() {
+      this.addLog(this.getTimeStamp() + 'start navigate ' + JSON.stringify(this.navigateForm));
       console.log(this.navigateForm);
       this.currentTime=0.;
       if (this.posisiontNow) {
@@ -518,6 +540,7 @@ export default {
         })
     },
     addFacility() {
+      this.addLog(this.getTimeStamp() + 'add facility ' + JSON.stringify(this.facilityForm));
       this.facilityForm.position = lastclick[lastclickp]
       this.$axios.post(`/api/facility?name=${this.facilityForm.name}&type=${this.facilityForm.type}&position=${this.facilityForm.position}&description=${this.facilityForm.description}`)// !
         .then(res => {
@@ -561,6 +584,7 @@ export default {
         })
     },
     addRoad() {
+      this.addLog(this.getTimeStamp() + 'add road ' + JSON.stringify(this.roadForm));
       this.$axios.post(`/api/road?type=${this.roadForm.type}&fromid=${this.roadForm.fromid}&toid=${this.roadForm.toid}&efficiency=${this.roadForm.efficiency}`)// !
         .then(res => {
           this.citiesRiskForm = {}
@@ -782,15 +806,19 @@ export default {
         });
     },
     handlePlay() {
+      this.addLog(this.getTimeStamp() + 'start imitation');
       isPlay = true;
     },
     handlePause() {
+      this.addLog(this.getTimeStamp() + 'pause imitation');
       isPlay = false;
     },
     handleRestartTime() {
+      this.addLog(this.getTimeStamp() + 'reset time to 08:00:00');
       this.backendTime = {hour: this.initialTime.getHours(), minute: this.initialTime.getMinutes(), second: this.initialTime.getSeconds()}
     },
     handleReset() {
+      this.addLog(this.getTimeStamp() + 'reset imitation');
       isPlay = false;
       this.posisiontNow = 0;
       this.currentTime = 0;
@@ -909,6 +937,7 @@ export default {
         ];
         displayLine.push(internalMarker);
         lineString.setCoordinates(displayLine);
+        this.addLog(this.getTimeStamp() + 'position now ' + JSON.stringify(internalMarker));
         marker.setPosition(internalMarker);
         mapView.setCenter(internalMarker);
         self.currentTime += deltaTtime / 1000.0 * 6 * 5;

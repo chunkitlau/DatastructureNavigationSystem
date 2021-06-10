@@ -3,7 +3,7 @@
     <el-container>
       <el-main>
         <div id="map" class="map" style="width: 100%; height: 660px; border: 2px solid black; "></div>
-        <div id="geo-marker"></div>
+        <!-- <div id="geo-marker"></div> -->
         <div style="display: none;">
           <!-- Popup -->
           <div id="popup" title=""></div>
@@ -239,7 +239,7 @@ function trans(location){
 
 // 采点
 var lastclick = [[0,0],[0,0]], lastclickp = 1;
-var markerEl,marker;
+// var markerEl,marker;
 var positionSearch;
 
 // 点表和边表
@@ -266,9 +266,13 @@ var buptCampusValue = 0;
 var detailValue = 1;
 var buptCampusView = [buptMainCampus, buptShaheCampus, buptCampus];
 
-var mapView = buptCampusView[buptCampusValue];
+var mapView = new ol.View({
+  center: [12948425, 4875300],
+  zoom: 11.7
+});
 
 // ol样式
+var imgIcon = require('./data/icon.png');
 var styles = {
   'route': new ol.style.Style({
     stroke: new ol.style.Stroke({
@@ -288,7 +292,7 @@ var styles = {
       rotateWithView: false,
       anchorXUnits: 'fraction', anchorYUnits: 'fraction',
       anchor: [0.5, 1],
-      src: '//raw.githubusercontent.com/jonataswalker/map-utils/master/images/marker.png',
+      src: imgIcon,
     }),
     zIndex: 5
   }),new ol.style.Style({
@@ -324,17 +328,23 @@ var startMarker = new ol.Feature(), stopMarker=new ol.Feature();
 var lineStringFeature = new ol.Feature();
 var lineString=new ol.geom.LineString([]);
 
+var geoMarker;
+var geoMarkerFeature=new ol.Feature();
+
 // 导航layer
-var routeLayer=new ol.layer.Vector({
-  source: new ol.source.Vector({
-    features: [routeFeature,startMarker,stopMarker,lineStringFeature]
-  })
+var routeSource=new ol.source.Vector({
+  features: [routeFeature,startMarker,stopMarker,lineStringFeature, geoMarkerFeature]
 });
+var routeLayer=new ol.layer.Vector({source: routeSource});
+
+// 室内导航相关
+var indoorFeatures=new ol.source.Vector();
+var indoorLayer=new ol.layer.Vector({source: indoorFeatures});
 
 var isPlay = false, isInitAnimation = false;
 var deltaTtime = 25.0;
 var polyline = null;
-var pathWeight = [], pathWeightSum =[];
+var pathWeight = [], pathWeightSum =[], pathType=[];
 
 var internalMarker = '';
 
@@ -397,7 +407,7 @@ export default {
         }, {
           value: '3',
           label: '交通工具的最短时间策略'
-        }],
+      }]
     }
   },
   computed: {
@@ -427,7 +437,7 @@ export default {
     },
   },
   watch: {
-    // 如果 `question` 发生改变，这个函数就会运行
+    // 如果 `buptCampusValue` 发生改变，这个函数就会运行
     buptCampusValue: function (newBuptCampusValue, oldBuptCampusValue) {
       buptCampusValue = Number(newBuptCampusValue);
       map.setView(buptCampusView[buptCampusValue]);
@@ -647,7 +657,6 @@ export default {
       if(!detailValue) { // hide layers
         console.log("triggered!");
         sourceFeatures.clear();
-        // map.removeLayer(layerEdge);
         return;
       }
       
@@ -679,28 +688,22 @@ export default {
           trans(fromLoc),trans(toLoc)
         );
         var line=new ol.geom.LineString(points);
-        var layerEdge = new ol.layer.Vector({
-          source: new ol.source.Vector({
-            features: [
-              new ol.Feature({ geometry: line })
-            ]
-          }),
-          style: [
-            new ol.style.Style({
-              stroke: new ol.style.Stroke({
-                width: 3,
-                color: edgeColor[edgeTable[i].type],
-                lineDash: [.1, 5]
-              }),
-              text: new ol.style.Text({
-                font: '16px sans-serif',
-                text: edgeTable[i].id,
-                fill: new ol.style.Fill({color: '#000'})
-              })
+        var feature =new ol.Feature({ geometry: line });
+        feature.setStyle(
+          new ol.style.Style({
+            stroke: new ol.style.Stroke({
+              width: 3,
+              color: edgeColor[edgeTable[i].type],
+              lineDash: [.1, 5]
+            }),
+            text: new ol.style.Text({
+              font: '16px sans-serif',
+              text: edgeTable[i].id,
+              fill: new ol.style.Fill({color: '#000'})
             })
-          ]
-        });
-        map.addLayer(layerEdge);
+          })
+        );
+        sourceFeatures.addFeatures([feature]);
       }
     },
     getNearby(location, distance) {
@@ -751,6 +754,7 @@ export default {
           lineString.setCoordinates([]);
           pathWeight=[];
           pathWeightSum=[0.];
+          pathType=[];
           this.routeData=res.data.data.path;
           for (let index=0,len=this.routeData.length; index<len; ++index) {
             this.routeData[index].fromname = this.facilitys.find(item=>item.id===this.routeData[index].fromid).name
@@ -761,10 +765,14 @@ export default {
             polyline.push(trans(dotTable.find(o=>o.id===this.routeData[i].toid).location));
             pathWeight.push(this.routeData[i].dist);
             pathWeightSum.push(pathWeightSum[i]+pathWeight[i]);
+            pathType.push(this.routeData[i].type);
           }
+          console.log(pathType);
           startMarker.setGeometry(new ol.geom.Point(polyline[0]));
           startMarker.setStyle(styles['icon']);
-          marker.setPosition(polyline[0]);
+          geoMarker=new ol.geom.Point(polyline[0]);
+          geoMarkerFeature.setGeometry(geoMarker);
+          geoMarkerFeature.setStyle(styles['geoMarker']);
           stopMarker.setGeometry(new ol.geom.Point(polyline[polyline.length-1]));
           stopMarker.setStyle(styles['icon']);
           route=new ol.geom.LineString(polyline);
@@ -772,6 +780,7 @@ export default {
           routeFeature.setStyle(styles['route']);
           lineStringFeature.setGeometry(lineString);
           lineStringFeature.setStyle(styles['route1']);
+          map.setView(mapView);
           mapView.setZoom(18.0);
           mapView.setCenter(polyline[0]);
         }).catch(err => {
@@ -792,7 +801,7 @@ export default {
       this.posisiontNow = 0;
       this.currentTime = 0;
       lineString.setCoordinates(polyline.slice(0,this.posisiontNow+1));
-      marker.setPosition(polyline[this.posisiontNow]);
+      geoMarker.setCoordinates(polyline[this.posisiontNow]);
     },
   },
   created() {
@@ -843,7 +852,7 @@ export default {
           source: new ol.source.OSM(),
           opacity: 0.6
         }),
-        layerFeatures, routeLayer
+        layerFeatures, routeLayer, indoorLayer
       ]
     });
 
@@ -877,14 +886,6 @@ export default {
       });
       $(element).popover('show');
     });
-    
-    markerEl = document.getElementById('geo-marker');
-    marker = new ol.Overlay({
-      offset: [-9, -5],
-      element: markerEl,
-      stopEvent: false
-    });
-    map.addOverlay(marker);
 
     //fire the animation
     var animation = function () {
@@ -906,8 +907,9 @@ export default {
         ];
         displayLine.push(internalMarker);
         lineString.setCoordinates(displayLine);
-        marker.setPosition(internalMarker);
+        geoMarker.setCoordinates(internalMarker);
         mapView.setCenter(internalMarker);
+        map.setView(mapView);
         self.currentTime += deltaTtime / 1000.0 * 6 * 5;
         if(++self.timeCount % 10 == 0)
           self.getNearby(transform(internalMarker, 'EPSG:3857' ,'EPSG:4326'), 50)
@@ -932,7 +934,7 @@ export default {
         // text: new ol.style.Text({text: indoorData.elements[i].tags.name,fill:new ol.style.Fill({color: "#999999"})})
       });
       feature.setStyle(polygonStyle);
-      sourceFeatures.addFeatures([feature]);
+      indoorFeatures.addFeatures([feature]);
     }
   },
   updated() {

@@ -21,6 +21,7 @@ const {
 
   getLog,
 } = require('../controller/utils')
+const { addLog, dumpLog } = require('../controller/log')
 const { SuccessModel, ErrorModel } = require('../model/resModel')
 const { getShortestPath, getPassbyShortestPath } = require('../controller/model.js')
 const { SBplans } = require('../config/schoolBusTimetable')
@@ -44,7 +45,8 @@ router.get('/', function (req, res, next) {
     get    /current/time<br>
     get    /current/state<br>
     get    /timetable/schoolbus<br>
-    
+    get    /log<br>
+    post   /log?str=<br>
 
     get    /vehicles/timetable<br>
     post   /vehicles/timetable<br>
@@ -150,7 +152,11 @@ router.post('/plan', function (req, res, next) {
   const endid = parseInt(req.query.endid)
   const type = parseInt(req.query.type)
   const passby = req.body || null
-  const starttime = { hour: parseInt(req.query.hour), minute: parseInt(req.query.minute), second: parseInt(req.query.second) }
+  const starttime = {
+    hour: parseInt(req.query.hour),
+    minute: parseInt(req.query.minute),
+    second: parseInt(req.query.second),
+  }
   if (passby != null) for (let i = 0; i < passby.length; i++) passby[i] = parseInt(passby[i].value)
   var result
   if (type == 2) result = getPassbyShortestPath(startid, endid, passby)
@@ -172,6 +178,16 @@ router.get('/currnet/state', function (req, res, next) {
 
 router.get('/timetable/schoolbus', function (req, res, nex) {
   const result = SBplans
+  res.json(new SuccessModel(result))
+})
+
+router.post('/log', function (req, res, next) {
+  const result = addLog(req.query.str)
+  res.json(new SuccessModel(result))
+})
+
+router.get('/log', function (req, res, next) {
+  const result = dumpLog()
   res.json(new SuccessModel(result))
 })
 

@@ -2,7 +2,7 @@
   <div id="app">
     <el-container>
       <el-main>
-        <div id="map" class="map" style="width: 100%; height: 660px; border: 2px solid black; "></div>
+        <div id="map" class="map" style="width: 100%; height: 920px; border: 2px solid black; "></div>
         <div style="display: none;">
           <!-- Popup -->
           <div id="popup" title=""></div>
@@ -127,12 +127,12 @@
             </el-button-group>
             <el-tabs type="border-card">
               <el-tab-pane label="附近">
-                <el-table :data="nearby" height="500" stripe style="width: 100%">
-                  <el-table-column prop="dist" label="距离(m)" width="80"></el-table-column>
-                  <el-table-column prop="name" label="名称" width="120"></el-table-column>
-                  <el-table-column prop="type" label="类型" width="100"></el-table-column>
-                  <el-table-column prop="description" label="标签" width="90"></el-table-column>
-                  <el-table-column label="操作" width="90">
+                <el-table :data="nearby" height="630" stripe style="width: 100%">
+                  <el-table-column prop="dist" label="距离(m)" width="100"></el-table-column>
+                  <el-table-column prop="name" label="名称" width="140"></el-table-column>
+                  <el-table-column prop="type" label="类型" width="120"></el-table-column>
+                  <el-table-column prop="description" label="标签" width="120"></el-table-column>
+                  <el-table-column label="操作" width="120">
                     <template slot-scope="scope">
                       <el-button size="mini" @click="navigateForm.departure = scope.row.id">设为起点</el-button><br/>
                       <el-button size="mini" @click="navigateForm.arrival = scope.row.id, setNavigate()">设为终点</el-button>
@@ -141,19 +141,19 @@
                 </el-table>
               </el-tab-pane>
               <el-tab-pane label="导航路线">
-                <el-table :data="routeData" height="500" stripe style="width: 100%">
-                  <el-table-column prop="fromname" label="出发点" width="120"></el-table-column>
-                  <el-table-column prop="toname" label="到达点" width="120"></el-table-column>
-                  <el-table-column prop="type" label="边类型" width="60"></el-table-column>
+                <el-table :data="routeData" height="630" stripe style="width: 100%">
+                  <el-table-column prop="fromname" label="出发点" width="190"></el-table-column>
+                  <el-table-column prop="toname" label="到达点" width="190"></el-table-column>
+                  <el-table-column prop="type" label="边类型" width="100"></el-table-column>
                   <el-table-column prop="efficiency" label="拥挤度" width="120"></el-table-column>
                 </el-table>
               </el-tab-pane>
               <el-tab-pane label="全部建筑">
-                <el-table :data="facilityswithouttype0" height="500" stripe style="width: 100%">
-                  <el-table-column prop="name" label="名称" width="120"></el-table-column>
-                  <el-table-column prop="type" label="类型" width="100"></el-table-column>
+                <el-table :data="facilityswithouttype0" height="630" stripe style="width: 100%">
+                  <el-table-column prop="name" label="名称" width="190"></el-table-column>
+                  <el-table-column prop="type" label="类型" width="120"></el-table-column>
                   <el-table-column prop="description" label="标签" width="120"></el-table-column>
-                  <el-table-column label="操作" width="90">
+                  <el-table-column label="操作" width="120">
                     <template slot-scope="scope">
                       <el-button size="mini" @click="navigateForm.departure = scope.row.id">设为起点</el-button><br/>
                       <el-button size="mini" @click="navigateForm.arrival = scope.row.id, setNavigate()">设为终点</el-button>
@@ -162,8 +162,8 @@
                 </el-table>
               </el-tab-pane>
               <el-tab-pane label="全部路径">
-                <el-table :data="paths" height="500" stripe style="width: 100%">
-                  <el-table-column prop="type" label="边类型" width="60"></el-table-column>
+                <el-table :data="paths" height="630" stripe style="width: 100%">
+                  <el-table-column prop="type" label="边类型" width="90"></el-table-column>
                   <el-table-column prop="fromname" label="出发点" width="120"></el-table-column>
                   <el-table-column prop="toname" label="到达点" width="120"></el-table-column>
                   <el-table-column prop="efficiency" label="拥挤度" width="90"></el-table-column>
@@ -176,8 +176,8 @@
                 </el-table>
               </el-tab-pane>
               <el-tab-pane label="班车时刻表">
-                <el-table :data="schoolBusTimetable" height="500" stripe style="width: 100%">
-                  <el-table-column prop="direction" label="方向" width="120"></el-table-column>
+                <el-table :data="schoolBusTimetable" height="630" stripe style="width: 100%">
+                  <el-table-column prop="direction" label="方向" width="150"></el-table-column>
                   <el-table-column prop="departureTime" label="出发时间" width="120"></el-table-column>
                   <el-table-column prop="arrivalTime" label="预计抵达时间" width="120"></el-table-column>
                   <el-table-column label="操作" width="180">
@@ -189,12 +189,12 @@
                 </el-table>
               </el-tab-pane>
               <el-tab-pane label="食堂">
-                <el-table :data="canteenTable" height="500" stripe style="width: 100%">
+                <el-table :data="canteenTable" height="630" stripe style="width: 100%">
                   <el-table-column prop="name" label="名称" width="120"></el-table-column>
                   <el-table-column prop="type" label="类型" width="100"></el-table-column>
-                  <el-table-column prop="description" label="标签" width="90"></el-table-column>
-                  <el-table-column prop="count" label="人流量" width="70"></el-table-column>
-                  <el-table-column label="操作" width="90">
+                  <el-table-column prop="description" label="标签" width="120"></el-table-column>
+                  <el-table-column prop="count" label="人流量" width="120"></el-table-column>
+                  <el-table-column label="操作" width="120">
                     <template slot-scope="scope">
                       <el-button size="mini" @click="navigateForm.departure = scope.row.id">设为起点</el-button><br/>
                       <el-button size="mini" @click="navigateForm.arrival = scope.row.id, setNavigate()">设为终点</el-button>
@@ -581,6 +581,31 @@ export default {
       this.$axios.get('/api/facilitys')// !
         .then(res => {
           this.facilityswithouttype0 = res.data.data
+          for(let i = 0; i < this.facilityswithouttype0.length; i++) {
+            switch (this.facilityswithouttype0[i].type) {
+              case 1:
+                this.facilityswithouttype0[i].type = "教学设施"
+                break;
+              case 2:
+                this.facilityswithouttype0[i].type = "生活设施"
+                break;
+              case 3:
+                this.facilityswithouttype0[i].type = "娱乐设施"
+                break;
+              case 4:
+                this.facilityswithouttype0[i].type = "办公设施"
+                break;
+              case 5:
+                this.facilityswithouttype0[i].type = "地标性建筑"
+                break;
+              case 6:
+                this.facilityswithouttype0[i].type = "室内设施"
+                break;
+              default:
+                this.facilityswithouttype0[i].type = "路口"
+                break;
+            }
+          }
         })
         .catch(err => {
           console.log('error', err)
@@ -624,6 +649,22 @@ export default {
           for (let index=0,len=this.paths.length; index<len; ++index) {
             this.paths[index].fromname = this.facilitys.find(item=>item.id===this.paths[index].fromid).name
             this.paths[index].toname = this.facilitys.find(item=>item.id===this.paths[index].toid).name
+            switch (this.paths[index].type) {
+              case 0:
+                this.paths[index].type = "人行道"
+              case 1:
+                this.paths[index].type = "自行车道"
+                break;
+              case 2:
+                this.paths[index].type = "车行道"
+                break;
+              case 3:
+                this.paths[index].type = "轨道交通"
+                break;
+              default:
+                this.paths[index].type = "人行道"
+                break;
+            }
           }
         })
         .catch(err => {
@@ -801,7 +842,6 @@ export default {
                 this.nearby[i].type = "路口"
                 break;
             } 
-
           }
         })
         .catch(err => {

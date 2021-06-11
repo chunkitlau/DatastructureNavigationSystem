@@ -92,16 +92,20 @@ const createRoad = (fromid, toid, type, efficiency) => {
   return exec(sql)
 }
 
-/* ------ TRASH ------ */
-
-const queryToNum = query => {
-  let result = Number(query)
-  if (result === 0 && query !== '0') {
-    result = NaN
-  }
-  return result
+module.exports = {
+  createFacility,
+  getFacility,
+  getFacilitys,
+  updateFacility,
+  getFacilitysAround,
+  getFacilitysAll,
+  deleteFacility,
+  createRoad,
+  getRoad,
+  getRoads,
 }
 
+/* ------ Undo  ------ */
 const addVehiclesTimetable = (number, type, departure, departureTime, arrival, arrivalTime, risk) => {
   const sql = `
     insert into vehiclestimetable(number, type, departure, departuretime, arrival, arrivaltime, risk)
@@ -122,30 +126,4 @@ const deleteVehiclesTimetable = number => {
     delete from vehiclestimetable where number=${number};
   `
   return exec(sql)
-}
-
-const getLog = () => {
-  const sql = `select * from log;`
-  return exec(sql)
-}
-
-module.exports = {
-  createFacility,
-  getFacility,
-  getFacilitys,
-  updateFacility,
-  getFacilitysAround,
-  getFacilitysAll,
-  deleteFacility,
-  createRoad,
-  getRoad,
-  getRoads,
-
-  queryToNum,
-
-  addVehiclesTimetable,
-  updateVehiclesTimetable,
-  deleteVehiclesTimetable,
-
-  getLog,
 }

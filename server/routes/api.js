@@ -11,13 +11,6 @@ const {
   createRoad,
   getRoad,
   getRoads,
-
-  queryToNum,
-  addVehiclesTimetable,
-  updateVehiclesTimetable,
-  deleteVehiclesTimetable,
-
-  getLog,
 } = require('../controller/utils')
 const { addLog, dumpLog } = require('../controller/log')
 const { getCanteens } = require('../controller/flow')
@@ -32,7 +25,7 @@ router.get('/', function (req, res, next) {
     
     post   /facility?name=&type=&position=&description=<br>
     get    /facilitys?description=&position=&hour=&minute=&second<br>
-    get    /facility<br>
+    get    /facility?id=<br>
     put    /facility?id=&name=&type=&description=<br>
     get    /facilitys/around?distance=<br>
     get    /facilitys/all<br>
@@ -41,8 +34,6 @@ router.get('/', function (req, res, next) {
     get    /roads<br>
     get    /road<br>
     post   /plan?startid=&endid=&type=&hour=&minute=&second<br>
-    get    /current/time<br>
-    get    /current/state<br>
     get    /timetable/schoolbus<br>
     get    /table/cateen<br>
     get    /log<br>
@@ -52,7 +43,6 @@ router.get('/', function (req, res, next) {
     post   /vehicles/timetable<br>
     put    /vehicles/timetable<br>
     delete /vehicles/timetable<br>
-    get    /log<br>
   `)
 })
 
@@ -190,7 +180,7 @@ router.get('/table/cateen', function (req, res, next) {
 
 module.exports = router
 
-/* ------ TRASH ------ */
+/* ------ Undo  ------ */
 
 router.post('/vehicles/timetable', function (req, res, next) {
   const number = queryToNum(req.query.number)
@@ -229,23 +219,4 @@ router.delete('/vehicles/timetable', function (req, res, next) {
     res.json(new SuccessModel(result))
   })
   //!
-})
-
-router.get('/log', function (req, res, next) {
-  const result = getLog()
-  return result.then(result => {
-    res.json(new SuccessModel(result))
-  })
-  //!
-})
-
-router.post('/login', function (req, res, next) {
-  const { username, password } = req.body
-  res.json({
-    errno: 0,
-    data: {
-      username,
-      password,
-    },
-  })
 })

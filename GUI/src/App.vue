@@ -396,9 +396,6 @@ export default {
       facilitysOptions: [],
       facilitysNormalOptions: [],
       setNavigateFormVisible: false,
-      addDialogFormVisible: false,
-      addTravelersPlansVisible: false,
-      addVehiclesTimetableVisible: false,
       addFacilityFormVisible: false,
       addRoadFormVisible: false,
       formLabelWidth: '120px',
@@ -412,8 +409,6 @@ export default {
       },
       facilityForm: { name: '', type: '', description: '', position: '' },
       roadForm: { type: '', departure: '', arrival: '', efficiency: '' },
-      travelersPlansForm: { id: '', requestTime: '', departure: '', arrival: '', plan: '' },
-      schoolBusTimetableForm: { direction: '', departureTime: '', arrival: '', arrivalTime: '', },
       form: {},
       facilitys: [],
       facilityswithouttype0: [],
@@ -422,8 +417,6 @@ export default {
       routeData: [{fromid: 0}],
       schoolBusTimetable: [],
       canteenTable: [],
-      travelersStatus: [],
-      travelersPlans: [],
       log: [],
       strategyOptions: [{
           value: '0',
@@ -726,7 +719,6 @@ export default {
     },
     displayData() {
       if(!detailValue) { // hide layers
-        console.log("triggered!");
         sourceFeatures.clear();
         return;
       }
